@@ -27,4 +27,6 @@ The in-site **AI Concierge** button uses the PDF chatbot server in `pdf-chatbot/
 3. Start the Vite app in another terminal:
    - `npm run dev`
 
-Optional: set `VITE_CHATBOT_API_URL` (e.g. `http://localhost:5000`) in a root `.env` if your server runs on a different host/port.
+In dev, the frontend calls `POST /chat` and Vite proxies it to `http://localhost:5000`.
+
+Optional (recommended for deployment): set `VITE_CHATBOT_API_URL` (e.g. `https://your-backend.example.com`) in a root `.env` / hosting env vars if the chatbot server is not hosted on the same origin as the frontend.

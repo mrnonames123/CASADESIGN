@@ -16,6 +16,8 @@ dist-ssr
 restore_point/
 vite-dev.err
 vite-dev.log
+pdf-chatbot/server/*.log
+pdf-chatbot/server/*.err
 
 # Editor directories and files
 .vscode/*

@@ -2,8 +2,10 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion';
 import { useNavigation } from '../../context/NavigationContext';
 
+// Prefer an explicit deploy-time URL, otherwise use same-origin (works on production).
+// In dev, Vite proxies `/chat` to the local server (see `vite.config.js`).
 const DEFAULT_API_BASE =
-  (import.meta?.env?.VITE_CHATBOT_API_URL || '').trim() || 'http://localhost:5000';
+  (import.meta?.env?.VITE_CHATBOT_API_URL || '').trim() || '';
 
 const buildUrl = (base, path) => `${base.replace(/\/+$/, '')}${path}`;
 
@@ -91,7 +93,10 @@ const PdfChatbotPanel = ({ apiBase = DEFAULT_API_BASE, onClose }) => {
       ]);
       queueMicrotask(scrollToBottom);
     } catch (e) {
-      const message = e?.message || 'Failed to reach chatbot server.';
+      const raw = e?.message || 'Failed to reach chatbot server.';
+      const message = /failed to fetch/i.test(raw)
+        ? 'Chatbot server unreachable. If developing locally, run `npm run chatbot:server`. If deployed, set `VITE_CHATBOT_API_URL` to your backend URL.'
+        : raw;
       setMessages((prev) => [
         ...prev,
         { id: `a_${Date.now()}`, role: 'assistant', content: message }
