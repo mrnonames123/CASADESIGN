@@ -16,8 +16,8 @@ const AboutPage = () => {
       </Suspense>
 
       <Helmet>
-        <title>About | Unseen.co</title>
-        <meta name="description" content="About Unseen.co — luxury, craft, and design intelligence." />
+        <title>About | Casa Design</title>
+        <meta name="description" content="About CASA DESIGNS — legacy, precision, and architectural intelligence." />
       </Helmet>
 
       <AboutSection />

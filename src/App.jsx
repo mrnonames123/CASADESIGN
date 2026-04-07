@@ -255,8 +255,8 @@ function AppScene() {
       )}
 
       <Helmet>
-        <title>Unseen.co | Luxury Redefined</title>
-        <meta name="description" content="Luxury experiences, redefined." />
+        <title>Casa Design | Architecture of Silence</title>
+        <meta name="description" content="Cinematic luxury architectural design studio." />
       </Helmet>
 
       {/* SCROLLING NARRATIVE STACK */}
