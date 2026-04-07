@@ -49,7 +49,7 @@ const ArchiveSection = () => {
       <div className="absolute inset-0 pointer-events-none opacity-10 mix-blend-screen overflow-hidden">
         <div className="absolute inset-0 animate-grain-float" 
           style={{ 
-            backgroundImage: 'url("https://grainy-gradients.vercel.app/noise.svg")',
+            backgroundImage: 'url("/noise.svg?v=casa-1")',
             filter: 'brightness(1.5) contrast(1.2)'
           }}
         />
