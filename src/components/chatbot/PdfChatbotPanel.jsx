@@ -9,6 +9,27 @@ const DEFAULT_API_BASE =
 
 const buildUrl = (base, path) => `${base.replace(/\/+$/, '')}${path}`;
 
+const resolveApiBase = (base) => {
+  const trimmed = (base || '').trim();
+  if (!trimmed) return '';
+
+  if (typeof window === 'undefined') return trimmed;
+
+  const host = (window.location?.hostname || '').toLowerCase();
+  const isLocalHost =
+    host === 'localhost' ||
+    host === '127.0.0.1' ||
+    host === '[::1]';
+
+  const pointsToLocal =
+    /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/i.test(trimmed);
+
+  // Prevent accidentally shipping a localhost base URL to production.
+  if (!isLocalHost && pointsToLocal) return '';
+
+  return trimmed;
+};
+
 const PANEL_VARIANTS = {
   hidden: { opacity: 0, scale: 0.9, filter: 'blur(10px)' },
   visible: { opacity: 1, scale: 1, filter: 'blur(0px)' },
@@ -28,6 +49,7 @@ const PdfChatbotPanel = ({ apiBase = DEFAULT_API_BASE, onClose }) => {
   ]));
 
   const listRef = useRef(null);
+  const resolvedApiBase = useMemo(() => resolveApiBase(apiBase), [apiBase]);
 
   const canSend = useMemo(() => !isSending && input.trim().length > 0, [input, isSending]);
 
@@ -74,7 +96,7 @@ const PdfChatbotPanel = ({ apiBase = DEFAULT_API_BASE, onClose }) => {
     queueMicrotask(scrollToBottom);
 
     try {
-      const res = await fetch(buildUrl(apiBase, '/chat'), {
+      const res = await fetch(buildUrl(resolvedApiBase, '/chat'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: text })
@@ -105,7 +127,7 @@ const PdfChatbotPanel = ({ apiBase = DEFAULT_API_BASE, onClose }) => {
     } finally {
       setIsSending(false);
     }
-  }, [apiBase, input, isSending, scrollToBottom]);
+  }, [input, isSending, resolvedApiBase, scrollToBottom]);
 
   return (
     <motion.div

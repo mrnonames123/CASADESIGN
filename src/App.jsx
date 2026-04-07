@@ -222,12 +222,14 @@ function AppScene() {
       <div className="casa-grain"></div>
       
       {/* GLOBAL 3D CANVAS (Shared Camera & Lights) */}
-      <MainBackgroundCanvas 
-        scrollProgress={scrollProgress} 
-        hasExperienced={hasExperienced}
-        heroTitleShown={heroTitleShown}
-        gateMetricsRef={gateMetricsRef}
-      />
+      {!preloaderActive && (
+        <MainBackgroundCanvas 
+          scrollProgress={scrollProgress} 
+          hasExperienced={hasExperienced}
+          heroTitleShown={heroTitleShown}
+          gateMetricsRef={gateMetricsRef}
+        />
+      )}
 
       <CustomCursor />
 
@@ -352,7 +354,7 @@ function AppScene() {
                       { l: "Masterworks", v: "42" },
                       { l: "Archival Series", v: "04" }
                     ].map((s, i) => (
-                      <div key={i} className="flex flex-col gap-2">
+                      <div key={i} className="stat-item flex flex-col gap-2">
                         <span className="text-[18px] md:text-3xl font-display text-white italic">{s.v}</span>
                         <span className="casa-about-stat-label text-[7px] md:text-[9px] font-mono text-white/40 uppercase tracking-[0.4em] leading-tight">{s.l}</span>
                       </div>
