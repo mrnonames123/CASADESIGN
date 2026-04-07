@@ -99,8 +99,8 @@ const AIChatbot = ({ hasExperienced }) => {
                 exit={{ opacity: 0, y: 10, scale: 0.9 }}
                 className="glass-pill-premium px-6 py-4 rounded-[30px] border border-[#A68A64]/30 pointer-events-auto shadow-2xl relative"
               >
-                <p className="text-[10px] font-mono text-[#A68A64] uppercase tracking-[0.3em] whitespace-nowrap mb-1">CASA Concierge</p>
-                <p className="text-[12px] font-display italic text-white whitespace-nowrap">How may I assist your design journey?</p>
+                <p className="text-[11px] font-mono text-[#A68A64] uppercase tracking-[0.28em] whitespace-nowrap mb-1 drop-shadow-[0_10px_22px_rgba(0,0,0,0.9)]">CASA Concierge</p>
+                <p className="text-[14px] font-display italic text-white whitespace-nowrap drop-shadow-[0_14px_30px_rgba(0,0,0,0.9)]">How may I assist your design journey?</p>
                 {/* Arrow hint towards button */}
                 <div className="absolute right-8 -bottom-2 w-4 h-4 bg-[#121212] border-r border-b border-[#A68A64]/30 rotate-45" />
               </motion.div>
@@ -127,7 +127,7 @@ const AIChatbot = ({ hasExperienced }) => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
-            <span className="font-body text-[10px] uppercase tracking-[0.5em] text-white/60 group-hover:text-white transition-colors">
+            <span className="font-body text-[11px] uppercase tracking-[0.42em] text-white/80 group-hover:text-white transition-colors drop-shadow-[0_10px_22px_rgba(0,0,0,0.9)]">
               CASA AI
             </span>
             {/* Ambient Pulse Ring */}

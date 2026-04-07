@@ -242,8 +242,8 @@ const PdfChatbotPanel = ({ apiBase = DEFAULT_API_BASE, onClose }) => {
                   style={{
                     color: m.role === 'user' ? 'rgba(212,175,55,0.9)' : 'rgba(245,245,247,0.42)',
                     fontFamily: '"Inter",sans-serif',
-                    letterSpacing: '0.55em',
-                    fontSize: '7px',
+                    letterSpacing: '0.45em',
+                    fontSize: '8px',
                     paddingTop: '2px'
                   }}
                 >
@@ -254,8 +254,8 @@ const PdfChatbotPanel = ({ apiBase = DEFAULT_API_BASE, onClose }) => {
                   style={{
                     color: m.role === 'user' ? 'rgba(245,245,247,0.92)' : 'rgba(245,245,247,0.85)',
                     fontFamily: '"Inter",sans-serif',
-                    fontSize: '12px',
-                    lineHeight: 1.7
+                    fontSize: '14px',
+                    lineHeight: 1.75
                   }}
                 >
                   {m.content}
@@ -288,10 +288,10 @@ const PdfChatbotPanel = ({ apiBase = DEFAULT_API_BASE, onClose }) => {
               className="px-3 py-2 rounded-full uppercase transition-colors"
               style={{
                 border: '1px solid rgba(212,175,55,0.28)',
-                color: 'rgba(245,245,247,0.78)',
+                color: 'rgba(245,245,247,0.88)',
                 fontFamily: '"Inter",sans-serif',
-                letterSpacing: '0.32em',
-                fontSize: '8px',
+                letterSpacing: '0.24em',
+                fontSize: '9px',
                 background: 'rgba(0,0,0,0.12)'
               }}
             >
@@ -318,8 +318,8 @@ const PdfChatbotPanel = ({ apiBase = DEFAULT_API_BASE, onClose }) => {
                 color: 'rgba(245,245,247,0.88)',
                 fontFamily: '"Bodoni Moda","Didot","Bodoni MT","Playfair Display",serif',
                 fontStyle: input.trim().length ? 'normal' : 'italic',
-                fontSize: '14px',
-                lineHeight: 1.45
+                fontSize: '16px',
+                lineHeight: 1.55
               }}
             />
             <div
@@ -336,8 +336,8 @@ const PdfChatbotPanel = ({ apiBase = DEFAULT_API_BASE, onClose }) => {
             style={{
               color: canSend ? 'rgba(212,175,55,0.95)' : 'rgba(245,245,247,0.25)',
               fontFamily: '"Inter",sans-serif',
-              letterSpacing: '0.45em',
-              fontSize: '9px'
+              letterSpacing: '0.38em',
+              fontSize: '10px'
             }}
           >
             SUBMIT →
