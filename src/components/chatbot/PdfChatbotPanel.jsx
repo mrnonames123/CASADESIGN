@@ -140,8 +140,11 @@ const PdfChatbotPanel = ({ apiBase = DEFAULT_API_BASE, onClose }) => {
       queueMicrotask(scrollToBottom);
     } catch (e) {
       const raw = e?.message || 'Failed to reach chatbot server.';
+      const isDev = Boolean(import.meta?.env?.DEV);
       const message = /failed to fetch/i.test(raw)
-        ? 'Chatbot server unreachable. If developing locally, run `npm run chatbot:server`. If deployed, set `VITE_CHATBOT_API_URL` to your backend URL.'
+        ? (isDev
+          ? 'Chatbot server unreachable. If developing locally, run `npm run chatbot:server`. If deployed, set `VITE_CHATBOT_API_URL` to your backend URL.'
+          : 'Chat is temporarily unavailable. Please try again in a moment.')
         : raw;
       setMessages((prev) => [
         ...prev,
@@ -302,6 +305,13 @@ const PdfChatbotPanel = ({ apiBase = DEFAULT_API_BASE, onClose }) => {
               rows={2}
               value={input}
               onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key !== 'Enter') return;
+                if (e.shiftKey) return;
+                if (!canSend) return;
+                e.preventDefault();
+                send();
+              }}
               placeholder={isSending ? 'Processing…' : 'Inquire about our design philosophy...'}
               className="w-full resize-none bg-transparent outline-none"
               style={{

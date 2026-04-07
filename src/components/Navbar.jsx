@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useNavigation } from '../context/NavigationContext';
 
@@ -6,6 +6,8 @@ const Navbar = ({ hasExperienced, onExperience }) => {
   const { lenisRef } = useNavigation();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const toggleBtnRef = useRef(null);
+  const firstMenuItemRef = useRef(null);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
@@ -49,6 +51,29 @@ const Navbar = ({ hasExperienced, onExperience }) => {
     };
   }, [isMenuOpen]);
 
+  useEffect(() => {
+    if (!isMenuOpen) return;
+
+    const onKeyDown = (e) => {
+      if (e.key !== 'Escape') return;
+      setIsMenuOpen(false);
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isMenuOpen]);
+
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    const t = setTimeout(() => firstMenuItemRef.current?.focus?.(), 0);
+    return () => clearTimeout(t);
+  }, [isMenuOpen]);
+
+  useEffect(() => {
+    if (isMenuOpen) return;
+    toggleBtnRef.current?.focus?.();
+  }, [isMenuOpen]);
+
   return (
     <nav className={`fixed top-0 left-0 w-full z-[100] transition-all duration-700 px-6 md:px-12 ${isScrolled ? 'py-4' : 'py-10'}`}>
       <div className="max-w-7xl mx-auto flex items-center justify-between">
@@ -65,7 +90,10 @@ const Navbar = ({ hasExperienced, onExperience }) => {
           type="button"
           className="lg:hidden pointer-events-auto relative h-11 w-11 rounded-full border border-white/10 bg-black/25 backdrop-blur-xl flex items-center justify-center hover:border-white/20 transition-colors"
           aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={isMenuOpen}
+          aria-controls="mobile-nav-panel"
           onClick={() => setIsMenuOpen((v) => !v)}
+          ref={toggleBtnRef}
         >
           <span className="sr-only">{isMenuOpen ? 'Close menu' : 'Open menu'}</span>
           <div className="flex flex-col gap-1.5">
@@ -121,6 +149,10 @@ const Navbar = ({ hasExperienced, onExperience }) => {
             />
 
             <motion.div
+              id="mobile-nav-panel"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Site navigation"
               className="fixed left-4 right-4 top-[88px] md:top-[104px] z-[9500] lg:hidden rounded-[28px] border border-white/10 bg-[rgba(10,10,10,0.78)] backdrop-blur-2xl shadow-[0_30px_90px_rgba(0,0,0,0.9)] overflow-hidden"
               initial={{ opacity: 0, y: -12, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -135,10 +167,11 @@ const Navbar = ({ hasExperienced, onExperience }) => {
               <div className="h-px w-full bg-white/10" />
 
               <div className="p-4 flex flex-col gap-2">
-                {links.map((link) => (
+                {links.map((link, idx) => (
                   <button
                     key={`m_${link.id}`}
                     type="button"
+                    ref={idx === 0 ? firstMenuItemRef : undefined}
                     onClick={() => {
                       setIsMenuOpen(false);
                       scrollTo(link.id);
