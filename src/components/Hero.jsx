@@ -141,7 +141,7 @@ const Hero = ({ animateIn = false, onExperience, hasExperienced, onTitleShown })
 
         {/* Action Button & Indicator (Optimized Glassmorphism) */}
         {!hasExperienced && (
-          <div className="absolute bottom-[8vh] md:bottom-[10vh] left-1/2 -translate-x-1/2 z-20 flex flex-col items-center w-full px-6 pointer-events-auto">
+          <div className="absolute bottom-[22vh] sm:bottom-[18vh] md:bottom-[10vh] left-1/2 -translate-x-1/2 z-20 flex flex-col items-center w-full px-6 pointer-events-auto">
             <motion.div 
               className="flex flex-col items-center gap-10 w-full"
               initial={{ opacity: 0, y: 40 }}
@@ -152,15 +152,15 @@ const Hero = ({ animateIn = false, onExperience, hasExperienced, onTitleShown })
                 onClick={handleExperience}
                 whileHover={{ scale: 1.02, y: -5 }}
                 whileTap={{ scale: 0.98 }}
-                className="group relative px-20 py-5 rounded-full overflow-hidden glass-pill-premium transition-all duration-700"
+                className="group relative px-12 sm:px-20 py-5 rounded-full overflow-hidden glass-pill-premium transition-all duration-700"
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/[0.05] to-transparent -translate-x-full group-hover:animate-[shimmer_2s_infinite] pointer-events-none" />
                 <span className="relative font-body text-[10px] uppercase tracking-[0.8em] text-white/70 group-hover:text-white transition-all transform translate-x-[0.4em]">
                   Explore Archive
                 </span>
               </motion.button>
-              
-              <div className="flex flex-col items-center gap-6">
+               
+              <div className="hidden md:flex flex-col items-center gap-6">
                 <div className="flex flex-col items-center gap-4">
                   <div className="text-[8px] font-mono text-[#A68A64]/40 tracking-[0.5em] uppercase">
                     System_Ready // Scroll_Trigger_Active
