@@ -337,8 +337,8 @@ function AppScene() {
                  </div>
                  
                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-20 items-stretch">
-                    <div className="flex flex-col justify-center glass-pill-premium p-10 md:p-14 rounded-[50px] border border-white/10">
-                      <p className="text-white/80 font-body text-left text-base md:text-xl leading-relaxed tracking-wide">
+                    <div className="casa-about-card flex flex-col justify-center glass-pill-premium p-10 md:p-14 rounded-[50px] border border-white/10">
+                      <p className="casa-about-copy text-white/90 font-body text-left text-base md:text-xl leading-relaxed tracking-wide">
                         CASA DESIGNS is built on engineering precision and artistic intuition. 
                         Every spatial visualization is a masterwork of light, texture, and 
                         craftsmanship, bridging the gap between digital ideation and physical built-environments.
@@ -354,7 +354,7 @@ function AppScene() {
                     ].map((s, i) => (
                       <div key={i} className="flex flex-col gap-2">
                         <span className="text-[18px] md:text-3xl font-display text-white italic">{s.v}</span>
-                        <span className="text-[7px] md:text-[9px] font-mono text-white/20 uppercase tracking-[0.4em] leading-tight">{s.l}</span>
+                        <span className="casa-about-stat-label text-[7px] md:text-[9px] font-mono text-white/40 uppercase tracking-[0.4em] leading-tight">{s.l}</span>
                       </div>
                     ))}
                   </div>

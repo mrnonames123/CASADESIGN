@@ -177,7 +177,7 @@ function CinematicZoomRoute({ isExiting, rigRef, onBlackout }) {
   return null;
 }
 
-function SofaLoaderScene({ progress01, isExiting, parallaxRef, rigRef }) {
+function SofaLoaderScene({ progress01, isExiting, parallaxRef, rigRef, onArrived }) {
   const { camera } = useThree();
   const groupRef = useRef(null);
   const keyLightRef = useRef(null);
@@ -187,14 +187,14 @@ function SofaLoaderScene({ progress01, isExiting, parallaxRef, rigRef }) {
   const rimRightRef = useRef(null);
   const envRef = useRef(null);
   const { scene: gltfScene } = useGLTF('/sofa.glb');
-  const quickZRef = useRef(null);
-  const quickRotYRef = useRef(null);
   const initializedRef = useRef(false);
+  const silhouetteStateRef = useRef(null);
+  const arrivedFiredRef = useRef(false);
   // Overall preloader sofa scale multiplier.
   const scaleMultiplier = 0.85; // Increased from 0.7 to fill space better
 
   // IMPORTANT: sanitize synchronously before first render so shaders never compile for MeshPhysicalMaterial.
-  const { scene, baseSize } = useMemo(() => {
+  const { scene, baseSize, silhouetteMaterials } = useMemo(() => {
     const cloned = cloneGltfScene(gltfScene);
 
     sanitizeGltfMaterials(cloned);
@@ -212,7 +212,18 @@ function SofaLoaderScene({ progress01, isExiting, parallaxRef, rigRef }) {
     pivot.y += size.y * 0.18;
     cloned.position.sub(pivot);
 
-    return { scene: cloned, baseSize: size };
+    const mats = [];
+    cloned.traverse((node) => {
+      if (!node.isMesh) return;
+      const materials = Array.isArray(node.material) ? node.material : [node.material];
+      materials.forEach((mat) => {
+        if (!mat?.isMeshStandardMaterial) return;
+        if (!mat.userData?.__casaOriginalColor) return;
+        mats.push(mat);
+      });
+    });
+
+    return { scene: cloned, baseSize: size, silhouetteMaterials: mats };
   }, [gltfScene]);
 
   useEffect(() => {
@@ -222,17 +233,13 @@ function SofaLoaderScene({ progress01, isExiting, parallaxRef, rigRef }) {
     // Start route state: far + 45°.
     groupRef.current.position.set(0, -0.35, -12);
     groupRef.current.rotation.set(0, Math.PI / 4, 0);
-
-    quickZRef.current = gsap.quickTo(groupRef.current.position, 'z', {
-      duration: 1.1,
-      ease: 'power3.out'
-    });
-
-    quickRotYRef.current = gsap.quickTo(groupRef.current.rotation, 'y', {
-      duration: 1.2,
-      ease: 'power3.out'
-    });
+    // Start tiny to avoid a visibility "pop" on first render/shader compile.
+    groupRef.current.scale.setScalar(0.001);
   }, []);
+
+  useEffect(() => {
+    silhouetteStateRef.current = null;
+  }, [scene]);
 
   useEffect(() => {
     if (!rigRef?.current) return;
@@ -252,8 +259,8 @@ function SofaLoaderScene({ progress01, isExiting, parallaxRef, rigRef }) {
     const finalT = map01(p, 0.8, 1.0);
     const litT = map01(p, 0.05, 0.9);
     const rimT = map01(p, 0.8, 1.0);
-
-    groupRef.current.visible = p >= 0.02;
+    const appearT = map01(p, 0.02, 0.08);
+    const appearScale = THREE.MathUtils.lerp(0.001, 1, appearT);
 
     // Route: 0-20% silhouette at z:-12, 20-80% glide to z:0, 80-100% rotate to face forward.
     const targetZ = THREE.MathUtils.lerp(-12, 0, moveT);
@@ -262,8 +269,7 @@ function SofaLoaderScene({ progress01, isExiting, parallaxRef, rigRef }) {
       ? THREE.MathUtils.lerp(rotAt80, 0, finalT)
       : THREE.MathUtils.lerp(Math.PI / 4, rotAt80, moveT);
 
-    if (quickZRef.current) quickZRef.current(targetZ);
-    else groupRef.current.position.z = damp(groupRef.current.position.z, targetZ, 3.1, dt);
+    groupRef.current.position.z = damp(groupRef.current.position.z, targetZ, 3.1, dt);
 
     const parallax = parallaxRef?.current ?? { x: 0, y: 0 };
     const maxYaw = THREE.MathUtils.degToRad(8);
@@ -272,8 +278,7 @@ function SofaLoaderScene({ progress01, isExiting, parallaxRef, rigRef }) {
     const parallaxPitch = maxPitch * -parallax.y;
 
     const composedYaw = targetRotY + parallaxYaw;
-    if (quickRotYRef.current) quickRotYRef.current(composedYaw);
-    else groupRef.current.rotation.y = dampAngle(groupRef.current.rotation.y, composedYaw, 3.1, dt);
+    groupRef.current.rotation.y = dampAngle(groupRef.current.rotation.y, composedYaw, 3.1, dt);
 
     // Lock pitch/roll for a gallery-like feel.
     groupRef.current.rotation.x = dampAngle(groupRef.current.rotation.x, parallaxPitch, 4.2, dt);
@@ -293,7 +298,7 @@ function SofaLoaderScene({ progress01, isExiting, parallaxRef, rigRef }) {
 
     // Subtle scale-up in the ready state (was stronger).
     const readyScaleT = 1 + 0.08 * map01(p, 0.8, 1.0);
-    const targetScale = fitScale * readyScaleT;
+    const targetScale = fitScale * readyScaleT * appearScale;
     groupRef.current.scale.setScalar(damp(groupRef.current.scale.x || targetScale, targetScale, 4.0, dt));
 
     // Adjusted base height for mobile/desktop to prevent whitespace gaps
@@ -334,20 +339,21 @@ function SofaLoaderScene({ progress01, isExiting, parallaxRef, rigRef }) {
 
     // Silhouette: force materials to black until 20%.
     const silhouette = p < 0.2;
-    scene.traverse((node) => {
-      if (!node.isMesh) return;
-      const materials = Array.isArray(node.material) ? node.material : [node.material];
-      materials.forEach((mat) => {
-        if (!mat?.isMeshStandardMaterial) return;
+    if (silhouetteStateRef.current !== silhouette) {
+      silhouetteStateRef.current = silhouette;
+      silhouetteMaterials.forEach((mat) => {
         const original = mat.userData.__casaOriginalColor;
         if (!original) return;
-        if (silhouette) {
-          mat.color.set('#000000');
-        } else {
-          mat.color.copy(original);
-        }
+        if (silhouette) mat.color.set('#000000');
+        else mat.color.copy(original);
       });
-    });
+    }
+
+    // Notify parent once the sofa is essentially in its final pose.
+    if (!arrivedFiredRef.current && p >= 0.94) {
+      arrivedFiredRef.current = true;
+      onArrived?.();
+    }
   });
 
   return (
@@ -418,6 +424,7 @@ const Preloader = ({ setAppLoaded, onReady, onExited }) => {
   const [showEnter, setShowEnter] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [isExiting, setIsExiting] = useState(false);
+  const [sofaArrived, setSofaArrived] = useState(false);
   const assetProgressRef = useRef(assetProgress);
   const hasRealProgressRef = useRef(false);
   const readyFiredRef = useRef(false);
@@ -461,13 +468,16 @@ const Preloader = ({ setAppLoaded, onReady, onExited }) => {
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  // Wait for the sofa to be fully loaded and positioned before showing the button.
+  // Show "Proceed Now" only after real assets are loaded and the sofa has arrived.
   useEffect(() => {
-    if (progress >= 100) {
-      const timer = setTimeout(() => setShowEnter(true), 800);
-      return () => clearTimeout(timer);
-    }
-  }, [progress]);
+    if (showEnter) return undefined;
+    if (isExiting) return undefined;
+    if (assetProgress < 100) return undefined;
+    if (!sofaArrived) return undefined;
+
+    const timer = setTimeout(() => setShowEnter(true), 350);
+    return () => clearTimeout(timer);
+  }, [assetProgress, isExiting, showEnter, sofaArrived]);
 
   const progress01 = useMemo(() => Math.min(1, Math.max(0, progress / 100)), [progress]);
   const logoOpacity = useMemo(() => 0.06 + progress01 * 0.94, [progress01]);
@@ -548,7 +558,8 @@ const Preloader = ({ setAppLoaded, onReady, onExited }) => {
           className="casa-preloader fixed inset-0 z-[10000] flex flex-col items-center justify-center overflow-hidden select-none"
           style={{ 
             pointerEvents: isExiting ? 'none' : 'auto', 
-            position: 'fixed' 
+            position: 'fixed',
+            backgroundColor: '#000'
           }}
           variants={loadingVariants}
           initial="initial"
@@ -560,13 +571,7 @@ const Preloader = ({ setAppLoaded, onReady, onExited }) => {
             className="absolute inset-0"
             style={{
               background:
-                'radial-gradient(ellipse at 50% 45%, rgba(42,34,24,0.92) 0%, rgba(12,12,12,0.98) 55%, rgba(0,0,0,1) 100%)'
-            }}
-          />
-          <div 
-            className="absolute inset-0 pointer-events-none opacity-20"
-            style={{
-              background: 'radial-gradient(circle at 50% 50%, rgba(212,175,55,0.06) 0%, transparent 60%)'
+                'radial-gradient(ellipse at 50% 45%, rgba(255,255,255,0.03) 0%, rgba(0,0,0,1) 70%)'
             }}
           />
 
@@ -599,8 +604,8 @@ const Preloader = ({ setAppLoaded, onReady, onExited }) => {
             'bottom-6 right-6'
           ].map((pos) => (
             <div key={pos} className={`absolute ${pos} w-8 h-8 pointer-events-none z-10 opacity-40`}>
-              <div className="absolute top-0 left-0 w-full h-[1px]" style={{ background: 'linear-gradient(90deg, #D4AF37, transparent)' }} />
-              <div className="absolute top-0 left-0 h-full w-[1px]" style={{ background: 'linear-gradient(180deg, #D4AF37, transparent)' }} />
+              <div className="absolute top-0 left-0 w-full h-[1px]" style={{ background: 'linear-gradient(90deg, rgba(245,245,247,0.5), transparent)' }} />
+              <div className="absolute top-0 left-0 h-full w-[1px]" style={{ background: 'linear-gradient(180deg, rgba(245,245,247,0.5), transparent)' }} />
             </div>
           ))}
 
@@ -709,6 +714,7 @@ const Preloader = ({ setAppLoaded, onReady, onExited }) => {
                   isExiting={isExiting}
                   parallaxRef={parallaxRef}
                   rigRef={rigRef}
+                  onArrived={() => setSofaArrived(true)}
                 />
                 <SofaPostFX enabled />
               </Suspense>

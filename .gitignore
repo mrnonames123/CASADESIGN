@@ -13,7 +13,7 @@ dist-ssr
 *.local
 
 # Local backups / temp
-restore_point
+restore_point/
 vite-dev.err
 vite-dev.log
 
