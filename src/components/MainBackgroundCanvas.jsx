@@ -83,7 +83,8 @@ const LiquidAtrium = ({ texture, scrollProgress, hasExperienced, viewport }) => 
       varying vec2 vUv;
       void main() {
         vUv = uv;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        // Fullscreen quad in clip space so camera zoom/scroll doesn't "scale" the background.
+        gl_Position = vec4(position.xy, 1.0, 1.0);
       }
     `,
     fragmentShader: `
@@ -144,9 +145,9 @@ const LiquidAtrium = ({ texture, scrollProgress, hasExperienced, viewport }) => 
   });
 
   return (
-    <mesh ref={meshRef} position={[0, 0, 0.1]}>
-      <planeGeometry args={[viewport.width, viewport.height]} />
-      <shaderMaterial args={[shaderArgs]} transparent />
+    <mesh ref={meshRef} frustumCulled={false}>
+      <planeGeometry args={[2, 2]} />
+      <shaderMaterial args={[shaderArgs]} transparent depthWrite={false} depthTest={false} />
     </mesh>
   );
 };
