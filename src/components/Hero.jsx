@@ -141,7 +141,7 @@ const Hero = ({ animateIn = false, onExperience, hasExperienced, onTitleShown })
 
         {/* Action Button & Indicator (Optimized Glassmorphism) */}
         {!hasExperienced && (
-          <div className="absolute bottom-[22vh] sm:bottom-[18vh] md:bottom-[10vh] left-1/2 -translate-x-1/2 z-20 flex flex-col items-center w-full px-6 pointer-events-auto">
+          <div className="absolute bottom-[26vh] sm:bottom-[18vh] md:bottom-[10vh] left-1/2 -translate-x-1/2 z-20 flex flex-col items-center w-full px-6 pointer-events-auto">
             <motion.div 
               className="flex flex-col items-center gap-10 w-full"
               initial={{ opacity: 0, y: 40 }}
