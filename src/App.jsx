@@ -302,19 +302,19 @@ function AppScene() {
         </div>
 
         {/* ACT III & IV: THE RED CARPET INTRODUCTION (Vision, Mission & The Proof) */}
-        <div id="mission-vision-wrapper" className="relative z-20">
-          
-          {/* PINNED NARRATIVE STACK */}
-          <div className="pinned-content relative h-screen sticky top-0 flex flex-col items-center justify-center overflow-hidden pointer-events-none px-6 z-[25]">
-            {/* Readability scrim (keeps typography consistent + visible over 3D) */}
-            <div className="absolute inset-0 z-0 pointer-events-none bg-[radial-gradient(circle_at_50%_45%,rgba(0,0,0,0.15)_0%,rgba(0,0,0,0.62)_65%,rgba(0,0,0,0.88)_100%)]" />
+          <div id="mission-vision-wrapper" className="relative z-20">
+           
+           {/* PINNED NARRATIVE STACK */}
+           <div className="pinned-content relative h-screen sticky top-0 flex flex-col items-center justify-center overflow-hidden pointer-events-none px-6 z-[25]">
+             {/* Readability scrim (keeps typography consistent + visible over 3D) */}
+            <div className="absolute inset-0 z-0 pointer-events-none backdrop-blur-[1.5px] bg-[radial-gradient(circle_at_50%_45%,rgba(0,0,0,0.30)_0%,rgba(0,0,0,0.74)_62%,rgba(0,0,0,0.94)_100%)]" />
             
             {/* STAGE 1: ELEVATING SPACES (LEFT ALIGNED) */}
             <div className="vision-gate absolute inset-0 z-10 flex flex-col items-start justify-center text-left px-8 md:px-12 lg:px-40">
-               <div className="relative group">
-                 <p className="font-mono text-[#A68A64] text-[9px] uppercase tracking-[0.5em] mb-6 opacity-60 font-bold flex items-center gap-4">
-                   <span className="w-8 h-[1px] bg-[#A68A64]/30" /> // 01_THE_VISION
-                 </p>
+                <div className="relative group">
+                  <p className="font-mono text-[#A68A64] text-[9px] uppercase tracking-[0.5em] mb-6 opacity-85 font-bold flex items-center gap-4 drop-shadow-[0_10px_26px_rgba(0,0,0,0.85)]">
+                    <span className="w-8 h-[1px] bg-[#A68A64]/30" /> // 01_THE_VISION
+                  </p>
                  <div className="relative">
                    <motion.h2 
                      className="vision-title font-display italic text-[clamp(2.8rem,9vw,6.8vw)] text-white leading-[0.9] max-w-2xl tracking-[-0.03em] drop-shadow-[0_25px_60px_rgba(0,0,0,0.8)]"
@@ -322,21 +322,21 @@ function AppScene() {
                      Elevating <br/><span className="not-italic text-[#A68A64]">Spaces.</span>
                    </motion.h2>
                    
-                   <div className="mt-12 w-full max-w-[85vw] md:max-w-sm glass-pill-premium p-8 rounded-[40px] border-l-4 border-l-[#A68A64]">
-                     <p className="vision-desc font-body text-white/80 text-[12px] md:text-sm uppercase tracking-[0.32em] leading-[2] font-medium">
-                       Redefining interiors through <br/>the lens of <span className="text-white">architectural silence</span> and industrial warmth.
-                     </p>
-                   </div>
+                    <div className="mt-12 w-full max-w-[85vw] md:max-w-sm glass-pill-premium p-8 rounded-[40px] border-l-4 border-l-[#A68A64]">
+                      <p className="vision-desc font-body text-white/90 text-[12px] md:text-sm uppercase tracking-[0.32em] leading-[2] font-medium drop-shadow-[0_10px_22px_rgba(0,0,0,0.85)]">
+                        Redefining interiors through <br/>the lens of <span className="text-white">architectural silence</span> and industrial warmth.
+                      </p>
+                    </div>
                  </div>
                </div>
             </div>
 
             {/* STAGE 2: TURNING IDEAS INTO REALITY (RIGHT SIDE BALANCE) */}
             <div className="mission-gate absolute inset-0 z-10 flex flex-col items-end justify-center text-right px-8 md:px-12 lg:px-40">
-               <div className="relative group flex flex-col items-end">
-                 <p className="font-mono text-[#A68A64] text-[9px] uppercase tracking-[0.5em] mb-6 opacity-60 font-bold flex items-center gap-4">
-                   // 02_THE_MISSION <span className="w-8 h-[1px] bg-[#A68A64]/30" />
-                 </p>
+                <div className="relative group flex flex-col items-end">
+                  <p className="font-mono text-[#A68A64] text-[9px] uppercase tracking-[0.5em] mb-6 opacity-85 font-bold flex items-center gap-4 drop-shadow-[0_10px_26px_rgba(0,0,0,0.85)]">
+                    // 02_THE_MISSION <span className="w-8 h-[1px] bg-[#A68A64]/30" />
+                  </p>
                  <div className="relative flex flex-col items-end">
                    <motion.h2 
                      className="mission-title font-display italic text-[clamp(2.8rem,9vw,6.8vw)] text-white leading-[0.9] max-w-2xl tracking-[-0.03em] drop-shadow-[0_25px_60px_rgba(0,0,0,0.8)]"
@@ -344,11 +344,11 @@ function AppScene() {
                      Turning Ideas <br/><span className="not-italic text-[#A68A64]">Into Reality.</span>
                    </motion.h2>
                    
-                   <div className="mt-12 w-full max-w-[85vw] md:max-w-sm glass-pill-premium p-8 rounded-[40px] border-r-4 border-r-[#A68A64] text-right">
-                     <p className="mission-desc font-body text-white/80 text-[12px] md:text-sm uppercase tracking-[0.32em] leading-[2] font-medium">
-                       Bridging the gap between <br/>pure <span className="text-white">conceptualization</span> and physical craftsmanship.
-                     </p>
-                   </div>
+                    <div className="mt-12 w-full max-w-[85vw] md:max-w-sm glass-pill-premium p-8 rounded-[40px] border-r-4 border-r-[#A68A64] text-right">
+                      <p className="mission-desc font-body text-white/90 text-[12px] md:text-sm uppercase tracking-[0.32em] leading-[2] font-medium drop-shadow-[0_10px_22px_rgba(0,0,0,0.85)]">
+                        Bridging the gap between <br/>pure <span className="text-white">conceptualization</span> and physical craftsmanship.
+                      </p>
+                    </div>
                  </div>
                </div>
             </div>
@@ -385,7 +385,7 @@ function AppScene() {
                     ].map((s, i) => (
                       <div key={i} className="stat-item flex flex-col gap-2">
                         <span className="text-[18px] md:text-3xl font-display text-white italic">{s.v}</span>
-                        <span className="casa-about-stat-label text-[7px] md:text-[9px] font-mono text-white/40 uppercase tracking-[0.4em] leading-tight">{s.l}</span>
+                        <span className="casa-about-stat-label text-[7px] md:text-[9px] font-mono text-white/65 uppercase tracking-[0.4em] leading-tight">{s.l}</span>
                       </div>
                     ))}
                   </div>

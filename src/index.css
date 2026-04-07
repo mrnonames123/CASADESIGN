@@ -235,13 +235,13 @@ html {
 }
 
 .glass-pill-premium {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(0, 0, 0, 0.40);
   backdrop-filter: blur(8px); /* Reduced from 15px for better scroll performance at 60fps */
   -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: 
-    0 4px 24px -1px rgba(0, 0, 0, 0.2),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    0 10px 40px -10px rgba(0, 0, 0, 0.55),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06);
   will-change: backdrop-filter;
 }
 

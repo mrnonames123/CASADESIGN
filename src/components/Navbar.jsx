@@ -104,12 +104,12 @@ const Navbar = ({ hasExperienced, onExperience }) => {
         </button>
 
         {/* FLOATING GLASS BRIDGE NAVIGATION */}
-        <div className="hidden lg:flex items-center gap-2 p-1.5 rounded-full border border-white/5 bg-black/20 backdrop-blur-2xl shadow-[0_40px_80px_-20px_rgba(0,0,0,0.8)] transition-all hover:border-white/10 group/nav">
+        <div className="hidden lg:flex items-center gap-2 p-1.5 rounded-full border border-white/10 bg-black/40 backdrop-blur-2xl shadow-[0_40px_90px_-20px_rgba(0,0,0,0.88)] transition-all hover:border-white/15 group/nav">
            {links.map((link) => (
              <button
                key={link.id}
                onClick={() => scrollTo(link.id)}
-               className="px-7 py-2.5 rounded-full font-body text-[9px] uppercase tracking-[0.35em] text-white/40 hover:text-white hover:bg-white/5 transition-all duration-500 relative overflow-hidden"
+               className="px-7 py-2.5 rounded-full font-body text-[9px] uppercase tracking-[0.35em] text-white/70 hover:text-white hover:bg-white/7 transition-all duration-500 relative overflow-hidden drop-shadow-[0_10px_24px_rgba(0,0,0,0.85)]"
              >
                 <span className="relative z-10">{link.name}</span>
                 <motion.div 
