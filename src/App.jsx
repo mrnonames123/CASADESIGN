@@ -279,7 +279,7 @@ function AppScene() {
 
       {appLoaded && (
         <Suspense fallback={null}>
-          <AIChatbot hasExperienced={hasExperienced} />
+          <AIChatbot hasExperienced={hasExperienced} activeSection={currentView} />
         </Suspense>
       )}
 

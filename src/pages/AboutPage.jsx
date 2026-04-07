@@ -12,7 +12,7 @@ const AboutPage = () => {
 
       <Navbar />
       <Suspense fallback={null}>
-        <AIChatbot />
+        <AIChatbot activeSection="about-page" />
       </Suspense>
 
       <Helmet>

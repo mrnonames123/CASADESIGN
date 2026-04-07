@@ -27,9 +27,10 @@ const resolveApiBase = (base) => {
   return trimmed;
 };
 
-const AIChatbot = ({ hasExperienced }) => {
+const AIChatbot = ({ hasExperienced = false, activeSection = 'hero-section' }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [showGreeting, setShowGreeting] = useState(false);
+  const isHeroSection = activeSection === 'hero-section';
 
   useEffect(() => {
     // Proactively wake the backend early (before the user's first question).
@@ -52,11 +53,16 @@ const AIChatbot = ({ hasExperienced }) => {
   }, []);
 
   useEffect(() => {
-    if (hasExperienced && !isOpen) {
+    if (hasExperienced && isHeroSection && !isOpen) {
       const timer = setTimeout(() => setShowGreeting(true), 3000);
       return () => clearTimeout(timer);
     }
-  }, [hasExperienced, isOpen]);
+  }, [hasExperienced, isHeroSection, isOpen]);
+
+  useEffect(() => {
+    if (isHeroSection) return;
+    setShowGreeting(false);
+  }, [isHeroSection]);
 
   useEffect(() => {
     const onKeyDown = (e) => {
