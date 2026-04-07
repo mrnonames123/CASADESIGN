@@ -159,22 +159,6 @@ const Hero = ({ animateIn = false, onExperience, hasExperienced, onTitleShown })
                   Explore Archive
                 </span>
               </motion.button>
-               
-              <div className="hidden md:flex flex-col items-center gap-6">
-                <div className="flex flex-col items-center gap-4">
-                  <div className="text-[8px] font-mono text-[#A68A64]/40 tracking-[0.5em] uppercase">
-                    System_Ready // Scroll_Trigger_Active
-                  </div>
-                  <motion.div 
-                    animate={{ 
-                      height: [40, 70, 40],
-                      opacity: [0.2, 0.6, 0.2] 
-                    }}
-                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                    className="w-[1px] bg-gradient-to-b from-white/20 to-transparent" 
-                  />
-                </div>
-              </div>
             </motion.div>
           </div>
         )}
