@@ -152,7 +152,7 @@ const LiquidAtrium = ({ texture, scrollProgress, hasExperienced, viewport }) => 
   );
 };
 
-function HybridScene({ scrollProgress, hasExperienced, heroTitleShown, gateMetricsRef }) {
+function HybridScene({ scrollProgressRef, scrollProgress, hasExperienced, heroTitleShown, gateMetricsRef }) {
   const { camera, viewport } = useThree();
   const { scene: gltfScene } = useGLTF('/chair.glb');
   const groupRef = useRef();
@@ -207,9 +207,13 @@ function HybridScene({ scrollProgress, hasExperienced, heroTitleShown, gateMetri
 
   useFrame((state, dt) => {
     const t = state.clock.getElapsedTime();
+    const scrollProgressValue =
+      typeof scrollProgressRef?.current === 'number'
+        ? scrollProgressRef.current
+        : (typeof scrollProgress === 'number' ? scrollProgress : 0);
     
     // RED CARPET NARRATIVE STAGES (1200vh scroll-weight synchronized)
-    const entranceFactor = THREE.MathUtils.smoothstep(scrollProgress, 0, 0.08); 
+    const entranceFactor = THREE.MathUtils.smoothstep(scrollProgressValue, 0, 0.08); 
     
     const gate = gateMetricsRef?.current;
     const gateProgress = gate?.progress ?? 0;
@@ -219,7 +223,7 @@ function HybridScene({ scrollProgress, hasExperienced, heroTitleShown, gateMetri
 
     // Use gate advancement for the culmination (not global scroll) to keep it anchored
     const gateCulminationFactor = THREE.MathUtils.smoothstep(gateProgress, 0.7, 1.0);
-    const culminationFactor = hasExperienced ? gateCulminationFactor : THREE.MathUtils.smoothstep(scrollProgress, 0.65, 0.9);
+    const culminationFactor = hasExperienced ? gateCulminationFactor : THREE.MathUtils.smoothstep(scrollProgressValue, 0.65, 0.9);
     
     // 1. Z-DEPTH (Constant Massive Presence)
     const startZ = 0.8; 
@@ -229,12 +233,12 @@ function HybridScene({ scrollProgress, hasExperienced, heroTitleShown, gateMetri
     let targetZ = startZ;
     
     // Robust Reset: If we are back at the header, force original zoom regardless of experience flag
-    if (scrollProgress < 0.02) {
+    if (scrollProgressValue < 0.02) {
       targetZ = startZ;
     } else if (!hasExperienced) {
-      if (scrollProgress < 0.12) {
+      if (scrollProgressValue < 0.12) {
         targetZ = THREE.MathUtils.lerp(startZ, midZ, entranceFactor);
-      } else if (scrollProgress < 0.68) {
+      } else if (scrollProgressValue < 0.68) {
         targetZ = midZ;
       } else {
         targetZ = THREE.MathUtils.lerp(midZ, finalZ, culminationFactor);
@@ -280,7 +284,7 @@ function HybridScene({ scrollProgress, hasExperienced, heroTitleShown, gateMetri
     camera.position.y = THREE.MathUtils.damp(camera.position.y, targetCamY, 7.5, dt);
 
     if (groupRef.current) {
-      const isVisibleNow = !chairPastEnd && (scrollProgress < 0.95 || inGate);
+      const isVisibleNow = !chairPastEnd && (scrollProgressValue < 0.95 || inGate);
       groupRef.current.visible = isVisibleNow;
       if (!isVisibleNow) return;
 
@@ -305,7 +309,7 @@ function HybridScene({ scrollProgress, hasExperienced, heroTitleShown, gateMetri
       
       // Transition from material close-up into the Majestic Narrative Scale
       let currentScale = maxScale;
-      if (scrollProgress < 0.1) {
+      if (scrollProgressValue < 0.1) {
         currentScale = THREE.MathUtils.lerp(startScale, maxScale, entranceFactor);
       }
       groupRef.current.scale.setScalar(currentScale);
@@ -369,7 +373,7 @@ function HybridScene({ scrollProgress, hasExperienced, heroTitleShown, gateMetri
   );
 }
 
-const MainBackgroundCanvas = ({ scrollProgress = 0, hasExperienced = false, heroTitleShown = false, gateMetricsRef }) => {
+const MainBackgroundCanvas = ({ scrollProgressRef, scrollProgress = 0, hasExperienced = false, heroTitleShown = false, gateMetricsRef }) => {
   return (
     <div className="fixed inset-0 z-0 pointer-events-none bg-black">
       <Canvas
@@ -391,6 +395,7 @@ const MainBackgroundCanvas = ({ scrollProgress = 0, hasExperienced = false, hero
       >
         <Suspense fallback={null}>
           <HybridScene
+            scrollProgressRef={scrollProgressRef}
             scrollProgress={scrollProgress}
             hasExperienced={hasExperienced}
             heroTitleShown={heroTitleShown}

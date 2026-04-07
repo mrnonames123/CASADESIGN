@@ -35,7 +35,11 @@ function AppScene() {
   const [preloaderActive, setPreloaderActive] = useState(true);
   const [hasExperienced, setHasExperienced] = useState(false);
   const [heroTitleShown, setHeroTitleShown] = useState(false);
+  // Keep a ref for high-frequency scroll updates so the 3D canvas doesn't re-render on every scroll tick.
+  const scrollProgressRef = useRef(0);
+  // UI can use a state snapshot (updated at most once per rAF).
   const [scrollProgress, setScrollProgress] = useState(0);
+  const scrollRafRef = useRef(0);
   const [currentView, setCurrentView] = useState('hero-section'); 
   const { setLenisRef, lenisRef } = useNavigation();
   const hasExperiencedRef = useRef(hasExperienced);
@@ -104,7 +108,14 @@ function AppScene() {
       
       // Calculate global scroll progress for 3D state
       const progress = e.animatedScroll / (e.limit || 1);
-      setScrollProgress(progress);
+      scrollProgressRef.current = progress;
+
+      if (!scrollRafRef.current) {
+        scrollRafRef.current = window.requestAnimationFrame(() => {
+          scrollRafRef.current = 0;
+          setScrollProgress(scrollProgressRef.current);
+        });
+      }
 
       // If users scroll on mobile/desktop, treat it as the "experience" intent and keep scrolling natural.
       if (!hasExperiencedRef.current && e.scroll > 40) {
@@ -122,6 +133,10 @@ function AppScene() {
     });
 
     return () => {
+      if (scrollRafRef.current) {
+        window.cancelAnimationFrame(scrollRafRef.current);
+        scrollRafRef.current = 0;
+      }
       lenis.destroy();
     };
   }, [appLoaded, setLenisRef]);
@@ -237,7 +252,8 @@ function AppScene() {
       {/* GLOBAL 3D CANVAS (Shared Camera & Lights) */}
       {!preloaderActive && (
         <MainBackgroundCanvas 
-          scrollProgress={scrollProgress} 
+          scrollProgressRef={scrollProgressRef}
+          scrollProgress={0}
           hasExperienced={hasExperienced}
           heroTitleShown={heroTitleShown}
           gateMetricsRef={gateMetricsRef}
