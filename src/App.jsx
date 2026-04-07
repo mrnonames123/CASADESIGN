@@ -76,11 +76,24 @@ function AppScene() {
 
     if (!appLoaded) return;
 
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const isTouchDevice =
+      typeof window !== 'undefined' &&
+      ((window.matchMedia && window.matchMedia('(pointer: coarse)').matches) ||
+        navigator.maxTouchPoints > 0);
+
     const lenis = new Lenis({
-      lerp: 0.1, // Increased from 0.025 for a more responsive and less 'laggy' feel
-      syncTouch: true,
-      wheelMultiplier: 1.0, // Increased for a more direct interaction
-      smoothWheel: true,
+      // Keep the "slow premium" feel, but avoid laggy/uneven scroll on phones.
+      lerp: prefersReducedMotion ? 1 : (isTouchDevice ? 0.22 : 0.14),
+      syncTouch: false,
+      wheelMultiplier: 1.0,
+      touchMultiplier: 1.05,
+      smoothWheel: !prefersReducedMotion,
+      smoothTouch: !prefersReducedMotion && isTouchDevice,
       infinite: false,
     });
 
@@ -93,9 +106,9 @@ function AppScene() {
       const progress = e.animatedScroll / (e.limit || 1);
       setScrollProgress(progress);
 
-      // Lock scroll to top if not experienced yet (Act I Aura)
-      if (!hasExperiencedRef.current) {
-        lenis.scrollTo(0, { immediate: true });
+      // If users scroll on mobile/desktop, treat it as the "experience" intent and keep scrolling natural.
+      if (!hasExperiencedRef.current && e.scroll > 40) {
+        setHasExperienced(true);
       }
 
       // Reset when scrolling back to the very top
