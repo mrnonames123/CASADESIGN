@@ -49,9 +49,33 @@ const PdfChatbotPanel = ({ apiBase = DEFAULT_API_BASE, onClose }) => {
   ]));
 
   const listRef = useRef(null);
+  const didWarmupRef = useRef(false);
   const resolvedApiBase = useMemo(() => resolveApiBase(apiBase), [apiBase]);
 
   const canSend = useMemo(() => !isSending && input.trim().length > 0, [input, isSending]);
+
+  useEffect(() => {
+    if (didWarmupRef.current) return;
+    didWarmupRef.current = true;
+
+    // Warm up the chatbot backend so the first real question doesn't pay the cold-start cost.
+    // (Common on Render/serverless: first request wakes the container, loads PDF, etc.)
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 4500);
+
+    fetch(buildUrl(resolvedApiBase, '/health'), {
+      method: 'GET',
+      cache: 'no-store',
+      signal: controller.signal
+    })
+      .catch(() => {})
+      .finally(() => clearTimeout(timeout));
+
+    return () => {
+      clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [resolvedApiBase]);
 
   useEffect(() => {
     // When the chat is open, prevent Lenis from hijacking wheel/touch events

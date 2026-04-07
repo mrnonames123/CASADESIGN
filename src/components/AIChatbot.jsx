@@ -2,9 +2,54 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PdfChatbotPanel from './chatbot/PdfChatbotPanel';
 
+const DEFAULT_API_BASE =
+  (import.meta?.env?.VITE_CHATBOT_API_URL || '').trim() || '';
+
+const buildUrl = (base, path) => `${(base || '').replace(/\/+$/, '')}${path}`;
+
+const resolveApiBase = (base) => {
+  const trimmed = (base || '').trim();
+  if (!trimmed) return '';
+  if (typeof window === 'undefined') return trimmed;
+
+  const host = (window.location?.hostname || '').toLowerCase();
+  const isLocalHost =
+    host === 'localhost' ||
+    host === '127.0.0.1' ||
+    host === '[::1]';
+
+  const pointsToLocal =
+    /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/i.test(trimmed);
+
+  // Prevent accidentally shipping a localhost base URL to production.
+  if (!isLocalHost && pointsToLocal) return '';
+
+  return trimmed;
+};
+
 const AIChatbot = ({ hasExperienced }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [showGreeting, setShowGreeting] = useState(false);
+
+  useEffect(() => {
+    // Proactively wake the backend early (before the user's first question).
+    const resolvedApiBase = resolveApiBase(DEFAULT_API_BASE);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 4500);
+
+    fetch(buildUrl(resolvedApiBase, '/health'), {
+      method: 'GET',
+      cache: 'no-store',
+      signal: controller.signal
+    })
+      .catch(() => {})
+      .finally(() => clearTimeout(timeout));
+
+    return () => {
+      clearTimeout(timeout);
+      controller.abort();
+    };
+  }, []);
 
   useEffect(() => {
     if (hasExperienced && !isOpen) {
