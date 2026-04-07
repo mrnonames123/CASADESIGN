@@ -15,13 +15,13 @@ The React Compiler is not enabled on this template because of its impact on dev 
 
 If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
 
-## PDF AI Concierge (Gemini)
+## PDF AI Concierge (Groq)
 
 The in-site **AI Concierge** button uses the PDF chatbot server in `pdf-chatbot/server`.
 
-1. Add your key in `pdf-chatbot/server/.env`:
-   - `GEMINI_API_KEY=...`
-   - Optional: `GEMINI_MODEL=gemini-2.0-flash`
+1. Add your key in `pdf-chatbot/server/.env` (see `pdf-chatbot/server/.env.example`):
+   - `GROQ_API_KEY=...`
+   - Optional: `GROQ_MODEL=llama-3.1-8b-instant`
 2. Start the chatbot server in one terminal:
    - `npm run chatbot:server`
 3. Start the Vite app in another terminal:

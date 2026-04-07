@@ -1,7 +1,6 @@
 import express from "express"
 import cors from "cors"
 import dotenv from "dotenv"
-import { GoogleGenerativeAI } from "@google/generative-ai"
 import path from "path"
 import { fileURLToPath } from "url"
 
@@ -15,23 +14,18 @@ const __dirname = path.dirname(__filename)
 // Ensure we always load `pdf-chatbot/server/.env` even when started from repo root.
 dotenv.config({ path: path.join(__dirname, ".env") })
 
-// ✅ FIX 1: Create app
 const app = express()
 
 app.use(cors())
 app.use(express.json())
 
-// ✅ Gemini setup
-const MODEL_NAME = process.env.GEMINI_MODEL || "gemini-2.0-flash"
-
-const apiKey = process.env.GEMINI_API_KEY
-const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null
-const model = genAI
-  ? genAI.getGenerativeModel({ model: MODEL_NAME })
-  : null
+// Groq (OpenAI-compatible) setup
+const MODEL_NAME = (process.env.GROQ_MODEL || "llama-3.1-8b-instant").trim() || "llama-3.1-8b-instant"
+const apiKey = (process.env.GROQ_API_KEY || "").trim()
+const GROQ_API_URL = (process.env.GROQ_API_URL || "https://api.groq.com/openai/v1/chat/completions").trim()
 
 if (!apiKey) {
-  console.warn("⚠️ Missing GEMINI_API_KEY. Add `GEMINI_API_KEY=...` to pdf-chatbot/server/.env and restart.")
+  console.warn("⚠️ Missing GROQ_API_KEY. Add `GROQ_API_KEY=...` to pdf-chatbot/server/.env and restart.")
 }
 
 const CONTACT_EMAIL = (process.env.CONTACT_EMAIL || "studio@casadesign.ai").trim() || "studio@casadesign.ai"
@@ -66,11 +60,12 @@ initialize().catch((error) => {
   process.exit(1)
 })
 
-console.log("🤖 Gemini model:", MODEL_NAME)
+console.log("🤖 Groq model:", MODEL_NAME)
 
 app.get("/health", (_req, res) => {
   res.json({
     ok: true,
+    provider: "groq",
     model: MODEL_NAME,
     pdfReady: isPdfReady,
     pdfFiles: pdfFilesLoaded,
@@ -78,6 +73,37 @@ app.get("/health", (_req, res) => {
     hasApiKey: Boolean(apiKey)
   })
 })
+
+async function groqComplete({ messages, temperature = 0.2, maxTokens = 700 }) {
+  const res = await fetch(GROQ_API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model: MODEL_NAME,
+      messages,
+      temperature,
+      max_tokens: maxTokens
+    })
+  })
+
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) {
+    const message =
+      data?.error?.message ||
+      data?.message ||
+      `Groq request failed (${res.status}).`
+    const err = new Error(message)
+    err.status = res.status
+    err.details = data
+    throw err
+  }
+
+  const content = data?.choices?.[0]?.message?.content
+  return typeof content === "string" ? content : ""
+}
 
 app.post("/chat", async (req, res) => {
   try {
@@ -97,9 +123,9 @@ app.post("/chat", async (req, res) => {
       })
     }
 
-    if (!model) {
+    if (!apiKey) {
       return res.status(500).json({
-        error: "Missing GEMINI_API_KEY. Add it to pdf-chatbot/server/.env and restart the server."
+        error: "Missing GROQ_API_KEY. Add it to pdf-chatbot/server/.env (or Render env vars) and restart the server."
       })
     }
 
@@ -127,12 +153,16 @@ Question:
 ${question}
 `
 
-    const result = await model.generateContent(prompt)
-
-    console.log("🔵 Gemini Raw Result:", result)
-
-    const response = await result.response
-    const text = response.text()
+    const text = await groqComplete({
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a helpful assistant. Follow the user's instruction exactly. Do not use outside knowledge."
+        },
+        { role: "user", content: prompt }
+      ]
+    })
 
     const shouldFallback =
       !text ||
@@ -151,22 +181,12 @@ ${question}
     console.error("🔥 ERROR:", error)
 
     const rawMessage = error?.message || "Something went wrong"
-    const isQuotaError =
-      rawMessage.includes("[429 Too Many Requests]") ||
-      rawMessage.toLowerCase().includes("quota exceeded")
-    const isModelError =
-      rawMessage.includes("[404 Not Found]") && rawMessage.includes("models/")
+    const status = Number(error?.status) || 500
+    const isRateLimit = status === 429
 
-    if (isQuotaError) {
+    if (isRateLimit) {
       return res.status(429).json({
-        error: "Gemini API quota exceeded. Check billing/rate limits and retry later.",
-        details: rawMessage
-      })
-    }
-
-    if (isModelError) {
-      return res.status(500).json({
-        error: `Configured Gemini model '${MODEL_NAME}' is unavailable. Update GEMINI_MODEL in server/.env.`,
+        error: "Groq API rate limit exceeded. Please retry in a moment.",
         details: rawMessage
       })
     }
