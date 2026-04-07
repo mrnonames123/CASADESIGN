@@ -177,7 +177,7 @@ function CinematicZoomRoute({ isExiting, rigRef, onBlackout }) {
   return null;
 }
 
-function SofaLoaderScene({ progress01, isExiting, parallaxRef, rigRef, onArrived }) {
+const SofaLoaderScene = ({ progress01, isExiting, parallaxRef, rigRef, onArrived }) => {
   const { camera } = useThree();
   const groupRef = useRef(null);
   const keyLightRef = useRef(null);
@@ -187,18 +187,37 @@ function SofaLoaderScene({ progress01, isExiting, parallaxRef, rigRef, onArrived
   const rimRightRef = useRef(null);
   const envRef = useRef(null);
   const { scene: gltfScene } = useGLTF('/sofa.glb');
-  const initializedRef = useRef(false);
-  const silhouetteStateRef = useRef(null);
   const arrivedFiredRef = useRef(false);
+  
   // Overall preloader sofa scale multiplier.
-  const scaleMultiplier = 0.85; // Increased from 0.7 to fill space better
+  const scaleMultiplier = 0.85;
 
-  // IMPORTANT: sanitize synchronously before first render so shaders never compile for MeshPhysicalMaterial.
+  // IMPORTANT: process synchronously in useMemo to minimize main-thread work at mount.
   const { scene, baseSize, silhouetteMaterials } = useMemo(() => {
     const cloned = cloneGltfScene(gltfScene);
 
+    // One-pass traversal for sanitization and enhancement
     sanitizeGltfMaterials(cloned);
-    enhanceMaterials(cloned);
+    
+    cloned.traverse((node) => {
+      if (!node.isMesh) return;
+      if (node.geometry?.attributes?.uv && !node.geometry?.attributes?.uv2) {
+        node.geometry.setAttribute('uv2', node.geometry.attributes.uv.clone());
+      }
+      const materials = Array.isArray(node.material) ? node.material : [node.material];
+      materials.forEach((mat) => {
+        if (!mat || !mat.isMeshStandardMaterial) return;
+        if (!mat.userData.__casaOriginalColor) {
+          mat.userData.__casaOriginalColor = mat.color?.clone?.() ?? new THREE.Color(1, 1, 1);
+        }
+        // Studio Noir leather: less plastic, more tufted depth.
+        mat.metalness = 0.2;
+        mat.roughness = 0.6;
+        mat.envMapIntensity = Math.max(1.45, mat.envMapIntensity ?? 1);
+        if (mat.aoMap) mat.aoMapIntensity = Math.max(1.25, mat.aoMapIntensity ?? 1);
+        mat.needsUpdate = true;
+      });
+    });
 
     cloned.position.set(0, 0, 0);
     const box = new THREE.Box3().setFromObject(cloned);
@@ -214,32 +233,16 @@ function SofaLoaderScene({ progress01, isExiting, parallaxRef, rigRef, onArrived
 
     const mats = [];
     cloned.traverse((node) => {
-      if (!node.isMesh) return;
-      const materials = Array.isArray(node.material) ? node.material : [node.material];
-      materials.forEach((mat) => {
-        if (!mat?.isMeshStandardMaterial) return;
-        if (!mat.userData?.__casaOriginalColor) return;
-        mats.push(mat);
-      });
+      if (node.isMesh) {
+        const materials = Array.isArray(node.material) ? node.material : [node.material];
+        materials.forEach(m => {
+          if (m?.userData?.__casaOriginalColor) mats.push(m);
+        });
+      }
     });
 
     return { scene: cloned, baseSize: size, silhouetteMaterials: mats };
   }, [gltfScene]);
-
-  useEffect(() => {
-    if (!groupRef.current || initializedRef.current) return;
-    initializedRef.current = true;
-
-    // Start route state: far + 45°.
-    groupRef.current.position.set(0, -0.35, -12);
-    groupRef.current.rotation.set(0, Math.PI / 4, 0);
-    // Start tiny to avoid a visibility "pop" on first render/shader compile.
-    groupRef.current.scale.setScalar(0.001);
-  }, []);
-
-  useEffect(() => {
-    silhouetteStateRef.current = null;
-  }, [scene]);
 
   useEffect(() => {
     if (!rigRef?.current) return;
@@ -254,6 +257,9 @@ function SofaLoaderScene({ progress01, isExiting, parallaxRef, rigRef, onArrived
     if (!groupRef.current) return;
     if (isExiting) return;
 
+    // dt safety: prevent physics/damping jumps if browser freezes briefly.
+    const cappedDt = Math.min(dt, 0.08);
+
     const p = clamp01(progress01);
     const moveT = map01(p, 0.05, 0.8);
     const finalT = map01(p, 0.8, 1.0);
@@ -262,94 +268,62 @@ function SofaLoaderScene({ progress01, isExiting, parallaxRef, rigRef, onArrived
     const appearT = map01(p, 0.02, 0.08);
     const appearScale = THREE.MathUtils.lerp(0.001, 1, appearT);
 
-    // Route: 0-20% silhouette at z:-12, 20-80% glide to z:0, 80-100% rotate to face forward.
     const targetZ = THREE.MathUtils.lerp(-12, 0, moveT);
     const rotAt80 = THREE.MathUtils.degToRad(30);
     const targetRotY = finalT > 0
       ? THREE.MathUtils.lerp(rotAt80, 0, finalT)
       : THREE.MathUtils.lerp(Math.PI / 4, rotAt80, moveT);
 
-    groupRef.current.position.z = damp(groupRef.current.position.z, targetZ, 3.1, dt);
+    groupRef.current.position.z = damp(groupRef.current.position.z, targetZ, 3.1, cappedDt);
 
     const parallax = parallaxRef?.current ?? { x: 0, y: 0 };
     const maxYaw = THREE.MathUtils.degToRad(8);
     const maxPitch = THREE.MathUtils.degToRad(3);
-    const parallaxYaw = maxYaw * parallax.x;
+    const composedYaw = targetRotY + (maxYaw * parallax.x);
     const parallaxPitch = maxPitch * -parallax.y;
 
-    const composedYaw = targetRotY + parallaxYaw;
-    groupRef.current.rotation.y = dampAngle(groupRef.current.rotation.y, composedYaw, 3.1, dt);
+    groupRef.current.rotation.y = dampAngle(groupRef.current.rotation.y, composedYaw, 3.1, cappedDt);
+    groupRef.current.rotation.x = dampAngle(groupRef.current.rotation.x, parallaxPitch, 4.2, cappedDt);
+    groupRef.current.rotation.z = dampAngle(groupRef.current.rotation.z, 0, 4.2, cappedDt);
 
-    // Lock pitch/roll for a gallery-like feel.
-    groupRef.current.rotation.x = dampAngle(groupRef.current.rotation.x, parallaxPitch, 4.2, dt);
-    groupRef.current.rotation.z = dampAngle(groupRef.current.rotation.z, 0, 4.2, dt);
-
-    // Responsive fit: scale to viewport + a smaller fill factor on narrow screens.
     const distance = Math.max(0.1, Math.abs(camera.position.z - groupRef.current.position.z));
     const visibleHeight = 2 * distance * Math.tan(THREE.MathUtils.degToRad(camera.fov * 0.5));
     const visibleWidth = visibleHeight * (camera.aspect || 1);
-
     const isNarrow = (camera.aspect || 1) < 0.72;
-    // Slightly smaller overall scale for the preloader sofa.
-    const fillFactor = isNarrow ? 0.95 : 0.75; // Increased to fill whitespace
+    const fillFactor = isNarrow ? 0.95 : 0.75;
     const fitScale = Math.min(visibleWidth / (baseSize.x || 1), visibleHeight / (baseSize.y || 1)) * fillFactor * scaleMultiplier;
 
     if (rigRef?.current) rigRef.current.baseScale = fitScale;
 
-    // Subtle scale-up in the ready state (was stronger).
     const readyScaleT = 1 + 0.08 * map01(p, 0.8, 1.0);
     const targetScale = fitScale * readyScaleT * appearScale;
-    groupRef.current.scale.setScalar(damp(groupRef.current.scale.x || targetScale, targetScale, 4.0, dt));
+    groupRef.current.scale.x = damp(groupRef.current.scale.x, targetScale, 4.0, cappedDt);
+    groupRef.current.scale.y = groupRef.current.scale.x;
+    groupRef.current.scale.z = groupRef.current.scale.x;
 
-    // Adjusted base height for mobile/desktop to prevent whitespace gaps
     const baseY = isNarrow ? -0.42 : -0.55;
     const breathe = Math.sin(state.clock.getElapsedTime() * 0.55) * 0.08 * map01(p, 0.25, 1.0);
-    groupRef.current.position.y = damp(groupRef.current.position.y, baseY + breathe, 3.0, dt);
+    groupRef.current.position.y = damp(groupRef.current.position.y, baseY + breathe, 3.0, cappedDt);
 
-    if (keyLightRef.current) {
-      // Keep front light subtle; rims define the silhouette.
-      const target = THREE.MathUtils.lerp(0.0, 0.28, litT);
-      keyLightRef.current.intensity = damp(keyLightRef.current.intensity, target, 3.0, dt);
-    }
+    if (keyLightRef.current) keyLightRef.current.intensity = damp(keyLightRef.current.intensity, THREE.MathUtils.lerp(0.0, 0.28, litT), 3.0, cappedDt);
+    if (fillLightRef.current) fillLightRef.current.intensity = damp(fillLightRef.current.intensity, THREE.MathUtils.lerp(0.0, 0.18, litT), 3.0, cappedDt);
+    if (rimLeftRef.current) rimLeftRef.current.intensity = damp(rimLeftRef.current.intensity, THREE.MathUtils.lerp(0.0, 52.0, rimT), 2.6, cappedDt);
+    if (rimRightRef.current) rimRightRef.current.intensity = damp(rimRightRef.current.intensity, THREE.MathUtils.lerp(0.0, 52.0, rimT), 2.6, cappedDt);
 
-    if (fillLightRef.current) {
-      const target = THREE.MathUtils.lerp(0.0, 0.18, litT);
-      fillLightRef.current.intensity = damp(fillLightRef.current.intensity, target, 3.0, dt);
-    }
+    if (envRef.current) envRef.current.environmentIntensity = THREE.MathUtils.lerp(0.08, 0.14, litT);
 
-    if (rimLightRef.current) {
-      // Main rim disabled (two side rims carry the look).
-      const target = 0.0;
-      rimLightRef.current.intensity = damp(rimLightRef.current.intensity, target, 2.6, dt);
-    }
-
-    if (rimLeftRef.current) {
-      const target = THREE.MathUtils.lerp(0.0, 52.0, rimT); // Increased for "punchier" look
-      rimLeftRef.current.intensity = damp(rimLeftRef.current.intensity, target, 2.6, dt);
-    }
-    if (rimRightRef.current) {
-      const target = THREE.MathUtils.lerp(0.0, 52.0, rimT);
-      rimRightRef.current.intensity = damp(rimRightRef.current.intensity, target, 2.6, dt);
-    }
-
-    if (envRef.current) {
-      const target = THREE.MathUtils.lerp(0.08, 0.14, litT);
-      envRef.current.environmentIntensity = target;
-    }
-
-    // Silhouette: force materials to black until 20%.
     const silhouette = p < 0.2;
-    if (silhouetteStateRef.current !== silhouette) {
-      silhouetteStateRef.current = silhouette;
+    if (groupRef.current.userData.lastSilhouette !== silhouette) {
+      groupRef.current.userData.lastSilhouette = silhouette;
       silhouetteMaterials.forEach((mat) => {
         const original = mat.userData.__casaOriginalColor;
-        if (!original) return;
-        if (silhouette) mat.color.set('#000000');
-        else mat.color.copy(original);
+        if (original) {
+          if (silhouette) mat.color.set('#000000');
+          else mat.color.copy(original);
+        }
       });
     }
 
-    // Notify parent once the sofa is essentially in its final pose.
     if (!arrivedFiredRef.current && p >= 0.94) {
       arrivedFiredRef.current = true;
       onArrived?.();
@@ -360,55 +334,21 @@ function SofaLoaderScene({ progress01, isExiting, parallaxRef, rigRef, onArrived
     <group>
       <InitRectAreaLights />
       <ambientLight intensity={0.05} />
-      <spotLight
-        ref={keyLightRef}
-        intensity={0.0}
-        position={[-2.8, 1.9, 4.6]}
-        color="#fff0df"
-        angle={0.55}
-        penumbra={0.85}
-        distance={15}
-      />
+      <spotLight ref={keyLightRef} intensity={0.0} position={[-2.8, 1.9, 4.6]} color="#fff0df" angle={0.55} penumbra={0.85} distance={15} />
       <directionalLight ref={fillLightRef} intensity={0.0} position={[-3.4, 1.4, 1.8]} color="#d6f0ff" />
 
-      {/* Golden Glow — main rim (RectAreaLight) */}
-      <rectAreaLight
-        ref={rimLightRef}
-        position={[0.0, 1.35, -4.2]}
-        rotation={[0, Math.PI, 0]}
-        width={3.6}
-        height={2.2}
-        intensity={0.0}
-        color={GOLD_RIM}
-      />
-
-      <rectAreaLight
-        ref={rimLeftRef}
-        position={[-2.9, 1.1, -4.1]}
-        rotation={[0, Math.PI * 0.78, 0]}
-        width={1.8}
-        height={1.2}
-        intensity={0.0}
-        color={GOLD_RIM}
-      />
-      <rectAreaLight
-        ref={rimRightRef}
-        position={[2.9, 1.1, -4.1]}
-        rotation={[0, -Math.PI * 0.78, 0]}
-        width={1.8}
-        height={1.2}
-        intensity={0.0}
-        color={GOLD_RIM}
-      />
+      <rectAreaLight ref={rimLightRef} position={[0.0, 1.35, -4.2]} rotation={[0, Math.PI, 0]} width={3.6} height={2.2} intensity={0.0} color={GOLD_RIM} />
+      <rectAreaLight ref={rimLeftRef} position={[-2.9, 1.1, -4.1]} rotation={[0, Math.PI * 0.78, 0]} width={1.8} height={1.2} intensity={0.0} color={GOLD_RIM} />
+      <rectAreaLight ref={rimRightRef} position={[2.9, 1.1, -4.1]} rotation={[0, -Math.PI * 0.78, 0]} width={1.8} height={1.2} intensity={0.0} color={GOLD_RIM} />
 
       <pointLight position={[0, -2, 2]} intensity={0.5} color={GOLD_RIM} decay={2} distance={8} />
-
       <Environment ref={envRef} preset="studio" environmentIntensity={0.0} />
 
       <group
         ref={groupRef}
-        position={[0, -0.35, -10]}
+        position={[0, -0.35, -12]}
         rotation={[0, Math.PI / 4, 0]}
+        scale={[0.001, 0.001, 0.001]}
       >
         <primitive object={scene} />
       </group>
@@ -416,7 +356,7 @@ function SofaLoaderScene({ progress01, isExiting, parallaxRef, rigRef, onArrived
       <ContactShadows opacity={0.4} scale={10} blur={3.8} far={20} position={[0, -0.95, 0]} />
     </group>
   );
-}
+};
 
 const Preloader = ({ setAppLoaded, onReady, onExited }) => {
   const { progress: assetProgress } = useProgress();
@@ -458,10 +398,11 @@ const Preloader = ({ setAppLoaded, onReady, onExited }) => {
       const target = hasRealProgressRef.current ? Math.min(99.5, real) : kickoff;
 
       // Smoothly approach the target (time-based so it feels consistent across FPS).
-      const alpha = 1 - Math.exp(-10.5 * dt);
+      const alpha = 1 - Math.exp(-9.0 * dt); // Slightly slower approach for more 'weight'
       const desired = current + (target - current) * alpha;
+
       // Clamp rate so it never "jumps" when real progress updates in chunks.
-      const maxUpPerSec = hasRealProgressRef.current ? 55 : 22;
+      const maxUpPerSec = hasRealProgressRef.current ? 45 : 18;
       const maxStep = maxUpPerSec * dt;
       current = Math.min(desired, current + maxStep);
 
@@ -690,7 +631,12 @@ const Preloader = ({ setAppLoaded, onReady, onExited }) => {
           <div className="casa-preloader-sofa-glow" />
 
           {/* 3D sofa canvas (centered) */}
-          <div className="absolute inset-0 z-[5] pointer-events-none">
+          <motion.div 
+            className="absolute inset-0 z-[5] pointer-events-none"
+            initial={{ opacity: 0, scale: 1.05 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 1.8, delay: 0.3, ease: 'easeOut' }}
+          >
             <Canvas
               style={{ width: '100%', height: '100%', pointerEvents: 'none' }}
               dpr={[1, 1.5]}
@@ -724,7 +670,7 @@ const Preloader = ({ setAppLoaded, onReady, onExited }) => {
                 <SofaPostFX enabled />
               </Suspense>
             </Canvas>
-          </div>
+          </motion.div>
 
           {/* Minimalist dash replaces loading text + bottom progress line */}
           {!showEnter && !isExiting && (
