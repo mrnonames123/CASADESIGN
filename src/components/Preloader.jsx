@@ -436,32 +436,37 @@ const Preloader = ({ setAppLoaded, onReady, onExited }) => {
     if (assetProgress > 0) hasRealProgressRef.current = true;
   }, [assetProgress]);
 
-  // Fast progress ramp (purely cosmetic) — never blocks entry.
+  // Smoothed loading progress (kickstarts even before real assets report progress).
   useEffect(() => {
     let raf;
     let current = 0;
-    const duration = 450; // Slightly more patient for 4.7MB GLB
-    const maxWait = 1400; // Hard cap
     const start = performance.now();
+    let last = start;
 
     const tick = (now) => {
-      const elapsed = now - start;
-      const t = Math.min(elapsed / duration, 1);
-      // Ease out quad — the bar slows near the end
-      current = Math.floor(t * t * (3 - 2 * t) * 100);
       const real = assetProgressRef.current || 0;
-      const timedOut = elapsed >= maxWait;
-      const combined = timedOut
-        ? 100
-        : hasRealProgressRef.current
-          ? Math.max(current, real)
-          : current;
-
-      setProgress(Math.min(100, combined));
-
-      if (combined < 100 && !timedOut) {
-        raf = requestAnimationFrame(tick);
+      if (real >= 100) {
+        setProgress(100);
+        return;
       }
+
+      const dt = Math.min(0.05, Math.max(0.001, (now - last) / 1000));
+      last = now;
+
+      // Kickoff: show some movement even while the first assets haven't reported progress yet.
+      const kickoff = Math.min(12, ((now - start) / 650) * 12);
+      const target = hasRealProgressRef.current ? Math.min(99.5, real) : kickoff;
+
+      // Smoothly approach the target (time-based so it feels consistent across FPS).
+      const alpha = 1 - Math.exp(-10.5 * dt);
+      const desired = current + (target - current) * alpha;
+      // Clamp rate so it never "jumps" when real progress updates in chunks.
+      const maxUpPerSec = hasRealProgressRef.current ? 55 : 22;
+      const maxStep = maxUpPerSec * dt;
+      current = Math.min(desired, current + maxStep);
+
+      setProgress(Math.max(0, Math.min(99.5, current)));
+      raf = requestAnimationFrame(tick);
     };
 
     raf = requestAnimationFrame(tick);
@@ -722,6 +727,41 @@ const Preloader = ({ setAppLoaded, onReady, onExited }) => {
           </div>
 
           {/* Minimalist dash replaces loading text + bottom progress line */}
+          {!showEnter && !isExiting && (
+            <div
+              className="absolute left-1/2 -translate-x-1/2 bottom-8 z-30 w-[min(560px,88vw)]"
+              role="progressbar"
+              aria-label="Loading"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={Math.round(progress)}
+            >
+              <div
+                className="flex items-center justify-between"
+                style={{
+                  fontFamily: '"Inter",sans-serif',
+                  letterSpacing: '0.42em',
+                  fontSize: '10px',
+                  color: 'rgba(245,245,247,0.62)',
+                  textShadow: '0 14px 50px rgba(0,0,0,0.85)'
+                }}
+              >
+                <span className="uppercase">Loading</span>
+                <span className="uppercase tabular-nums">{Math.round(progress)}%</span>
+              </div>
+              <div className="mt-3 h-[2px] w-full rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.10)' }}>
+                <div
+                  className="h-full"
+                  style={{
+                    width: `${progress}%`,
+                    background: 'rgba(245,245,247,0.78)',
+                    boxShadow: '0 0 18px rgba(245,245,247,0.22)',
+                    transition: 'width 120ms linear'
+                  }}
+                />
+              </div>
+            </div>
+          )}
 
           {/* Lens-blur fade on enter */}
           <motion.div
