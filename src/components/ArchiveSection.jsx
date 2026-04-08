@@ -21,7 +21,7 @@ const ArchiveSection = () => {
     <section 
       ref={sectionRef}
       id="archive-section"
-      className="relative w-full min-h-[165vh] bg-[#080808] flex items-center justify-center overflow-hidden py-32 px-10 md:px-24 perspective-1000"
+      className="relative w-full min-h-[165vh] bg-[#080808] flex items-start md:items-center justify-center overflow-hidden pt-48 pb-32 md:py-32 px-10 md:px-24 perspective-1000"
     >
       {/* 1. PARALLAX TECH GRID */}
       <motion.div 
