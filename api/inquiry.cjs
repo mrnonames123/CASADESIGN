@@ -36,6 +36,10 @@ module.exports = async (req, res) => {
     const name = String(body?.name || '').trim();
     const email = String(body?.email || '').trim();
     const message = String(body?.message || '').trim();
+    const projectType = String(body?.projectType || '').trim();
+    const budgetRange = String(body?.budgetRange || '').trim();
+    const timeline = String(body?.timeline || '').trim();
+    const preferredContact = String(body?.preferredContact || '').trim();
     const website = String(body?.website || '').trim(); // honeypot
 
     if (website) {
@@ -50,6 +54,19 @@ module.exports = async (req, res) => {
     }
     if (!message || message.length < 10 || message.length > 5000) {
       return res.status(400).json({ ok: false, error: 'Please enter a message (10–5000 chars).' });
+    }
+
+    if (projectType.length > 120) {
+      return res.status(400).json({ ok: false, error: 'Project type is too long.' });
+    }
+    if (budgetRange.length > 120) {
+      return res.status(400).json({ ok: false, error: 'Budget range is too long.' });
+    }
+    if (timeline.length > 120) {
+      return res.status(400).json({ ok: false, error: 'Timeline is too long.' });
+    }
+    if (preferredContact.length > 60) {
+      return res.status(400).json({ ok: false, error: 'Preferred contact is too long.' });
     }
 
     const to = (process.env.INQUIRY_TO_EMAIL || '').trim();
@@ -70,17 +87,40 @@ module.exports = async (req, res) => {
 
     const subject = `New inquiry from ${name}`;
 
+    const metaLines = [
+      projectType ? `<p style="margin:0 0 10px"><strong>Project type:</strong> ${escapeHtml(projectType)}</p>` : '',
+      budgetRange ? `<p style="margin:0 0 10px"><strong>Budget:</strong> ${escapeHtml(budgetRange)}</p>` : '',
+      timeline ? `<p style="margin:0 0 10px"><strong>Timeline:</strong> ${escapeHtml(timeline)}</p>` : '',
+      preferredContact
+        ? `<p style="margin:0 0 10px"><strong>Preferred contact:</strong> ${escapeHtml(preferredContact)}</p>`
+        : ''
+    ]
+      .filter(Boolean)
+      .join('');
+
     const html = `
       <div style="font-family:Inter,Arial,sans-serif;line-height:1.6">
         <h2 style="margin:0 0 12px">New Casa Design inquiry</h2>
         <p style="margin:0 0 10px"><strong>Name:</strong> ${escapeHtml(name)}</p>
         <p style="margin:0 0 10px"><strong>Email:</strong> ${escapeHtml(email)}</p>
+        ${metaLines}
         <p style="margin:16px 0 8px"><strong>Message:</strong></p>
         <pre style="white-space:pre-wrap;background:#0b0b0b;color:#f5f5f7;padding:14px;border-radius:10px">${escapeHtml(message)}</pre>
       </div>
     `;
 
-    const text = `New Casa Design inquiry\n\nName: ${name}\nEmail: ${email}\n\nMessage:\n${message}\n`;
+    const metaText = [
+      projectType ? `Project type: ${projectType}` : '',
+      budgetRange ? `Budget: ${budgetRange}` : '',
+      timeline ? `Timeline: ${timeline}` : '',
+      preferredContact ? `Preferred contact: ${preferredContact}` : ''
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    const text = `New Casa Design inquiry\n\nName: ${name}\nEmail: ${email}${
+      metaText ? `\n${metaText}` : ''
+    }\n\nMessage:\n${message}\n`;
 
     const resp = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -120,4 +160,3 @@ function escapeHtml(value) {
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#039;');
 }
-

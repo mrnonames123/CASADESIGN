@@ -27,7 +27,16 @@ const Contact = () => {
   }, [apiBase]);
 
   const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState({ name: '', email: '', project: '', website: '' });
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    project: '',
+    projectType: '',
+    budgetRange: '',
+    timeline: '',
+    preferredContact: 'email',
+    website: ''
+  });
   const [status, setStatus] = useState('idle'); // idle | sending | error | success | config
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -48,8 +57,8 @@ const Contact = () => {
 
   const handleSubmit = async () => {
     if (!canAdvance) {
-       setErrorMessage('Please fill all fields (message should be at least 10 characters).');
-       return;
+      setErrorMessage('Please add a short project brief (10+ characters).');
+      return;
     }
 
     setStatus('sending');
@@ -64,6 +73,10 @@ const Contact = () => {
           name: formData.name.trim(),
           email: formData.email.trim(),
           message: formData.project.trim(),
+          projectType: (formData.projectType || '').trim(),
+          budgetRange: (formData.budgetRange || '').trim(),
+          timeline: (formData.timeline || '').trim(),
+          preferredContact: (formData.preferredContact || '').trim(),
           website: formData.website || ''
         })
       });
@@ -80,7 +93,16 @@ const Contact = () => {
 
       setStatus('success');
       setStep(3); // Move to success step
-      setFormData({ name: '', email: '', project: '', website: '' });
+      setFormData({
+        name: '',
+        email: '',
+        project: '',
+        projectType: '',
+        budgetRange: '',
+        timeline: '',
+        preferredContact: 'email',
+        website: ''
+      });
     } catch (err) {
       console.error('Contact error:', err);
       setStatus('error');
@@ -214,11 +236,126 @@ const Contact = () => {
                       <span className="text-4xl font-display italic text-[#A68A64]">02</span>
                       <span className="text-[10px] font-mono text-white/40 uppercase tracking-widest">Scope</span>
                    </div>
+
+                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                     <div className="flex flex-col gap-2">
+                       <span className="text-[9px] font-mono text-white/40 uppercase tracking-widest">
+                         Project Type
+                       </span>
+                       <select
+                         name="projectType"
+                         value={formData.projectType}
+                         onChange={handleInputChange}
+                         className="w-full bg-transparent border-b border-white/10 py-4 font-body text-white/90 focus:border-[#A68A64] transition-colors outline-none"
+                       >
+                         <option value="" className="bg-[#050505]">
+                           Select…
+                         </option>
+                         <option value="Interior design" className="bg-[#050505]">
+                           Interior design
+                         </option>
+                         <option value="Architectural visualization" className="bg-[#050505]">
+                           Architectural visualization
+                         </option>
+                         <option value="FF&E / Product" className="bg-[#050505]">
+                           FF&amp;E / Product
+                         </option>
+                         <option value="Brand / Website" className="bg-[#050505]">
+                           Brand / Website
+                         </option>
+                         <option value="Other" className="bg-[#050505]">
+                           Other
+                         </option>
+                       </select>
+                     </div>
+
+                     <div className="flex flex-col gap-2">
+                       <span className="text-[9px] font-mono text-white/40 uppercase tracking-widest">
+                         Budget Range
+                       </span>
+                       <select
+                         name="budgetRange"
+                         value={formData.budgetRange}
+                         onChange={handleInputChange}
+                         className="w-full bg-transparent border-b border-white/10 py-4 font-body text-white/90 focus:border-[#A68A64] transition-colors outline-none"
+                       >
+                         <option value="" className="bg-[#050505]">
+                           Select…
+                         </option>
+                         <option value="Not sure yet" className="bg-[#050505]">
+                           Not sure yet
+                         </option>
+                         <option value="Under $2k" className="bg-[#050505]">
+                           Under $2k
+                         </option>
+                         <option value="$2k–$5k" className="bg-[#050505]">
+                           $2k–$5k
+                         </option>
+                         <option value="$5k–$10k" className="bg-[#050505]">
+                           $5k–$10k
+                         </option>
+                         <option value="$10k+" className="bg-[#050505]">
+                           $10k+
+                         </option>
+                       </select>
+                     </div>
+
+                     <div className="flex flex-col gap-2">
+                       <span className="text-[9px] font-mono text-white/40 uppercase tracking-widest">
+                         Timeline
+                       </span>
+                       <select
+                         name="timeline"
+                         value={formData.timeline}
+                         onChange={handleInputChange}
+                         className="w-full bg-transparent border-b border-white/10 py-4 font-body text-white/90 focus:border-[#A68A64] transition-colors outline-none"
+                       >
+                         <option value="" className="bg-[#050505]">
+                           Select…
+                         </option>
+                         <option value="ASAP (1–2 weeks)" className="bg-[#050505]">
+                           ASAP (1–2 weeks)
+                         </option>
+                         <option value="2–4 weeks" className="bg-[#050505]">
+                           2–4 weeks
+                         </option>
+                         <option value="1–2 months" className="bg-[#050505]">
+                           1–2 months
+                         </option>
+                         <option value="Flexible" className="bg-[#050505]">
+                           Flexible
+                         </option>
+                       </select>
+                     </div>
+
+                     <div className="flex flex-col gap-2">
+                       <span className="text-[9px] font-mono text-white/40 uppercase tracking-widest">
+                         Preferred Contact
+                       </span>
+                       <select
+                         name="preferredContact"
+                         value={formData.preferredContact}
+                         onChange={handleInputChange}
+                         className="w-full bg-transparent border-b border-white/10 py-4 font-body text-white/90 focus:border-[#A68A64] transition-colors outline-none"
+                       >
+                         <option value="email" className="bg-[#050505]">
+                           Email
+                         </option>
+                         <option value="whatsapp" className="bg-[#050505]">
+                           WhatsApp
+                         </option>
+                         <option value="phone" className="bg-[#050505]">
+                           Phone call
+                         </option>
+                       </select>
+                     </div>
+                   </div>
+
                    <textarea 
                      name="project"
                      value={formData.project}
                      onChange={handleInputChange}
-                     placeholder="Project Brief & Requirements"
+                     placeholder="Project brief (share scope, style, space, and any links). If you prefer WhatsApp/phone, include your number here."
                      rows="4"
                      className="w-full bg-transparent border-b border-white/10 py-4 font-body text-white focus:border-[#A68A64] transition-colors outline-none resize-none"
                    />
