@@ -424,7 +424,7 @@ function AppScene() {
                       </p>
                     </div>
                     
-                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 md:gap-x-12 gap-y-10 pt-16 border-t border-white/5 w-full">
+                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 md:gap-x-12 gap-y-6 md:gap-y-10 pt-8 md:pt-16 border-t border-white/5 w-full pb-8 md:pb-0">
                       {[
                         { l: "Proprietary Designs", v: "150+" },
                         { l: "Architectural Nodes", v: "12" },

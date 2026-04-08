@@ -132,7 +132,7 @@ const AIChatbot = ({ hasExperienced = false, activeSection = 'hero-section' }) =
             whileTap={{ scale: 0.95 }}
             type="button"
             onClick={handleOpen}
-            className="pointer-events-auto group flex items-center gap-3 sm:gap-4 rounded-full border border-[#A68A64]/20 bg-black/60 backdrop-blur-2xl p-3.5 sm:px-6 sm:py-3.5 shadow-[0_25px_80px_rgba(0,0,0,0.85)] hover:border-[#A68A64]/40 transition-all relative overflow-hidden"
+            className={`pointer-events-auto group flex items-center gap-3 sm:gap-4 rounded-full border border-[#A68A64]/20 bg-black/60 backdrop-blur-2xl p-3 sm:px-6 sm:py-3.5 shadow-[0_25px_80px_rgba(0,0,0,0.85)] hover:border-[#A68A64]/40 transition-all relative overflow-hidden ${isHeroSection ? 'opacity-90' : 'opacity-35'} hover:opacity-100 duration-700`}
             aria-label="Open CASA AI"
           >
             <div className="flex items-center justify-center p-2 bg-[#A68A64]/20 rounded-full ring-2 ring-[#A68A64]/40 shadow-[0_0_20px_rgba(166,138,100,0.4)] group-hover:shadow-[0_0_30px_rgba(166,138,100,0.6)] transition-all">
