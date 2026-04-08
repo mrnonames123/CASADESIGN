@@ -15,6 +15,15 @@ const Hero = ({ animateIn = false, onExperience, hasExperienced, onTitleShown })
   const springY = useSpring(mouseY, { damping: 40, stiffness: 150 });
 
   useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    if (!window.matchMedia) return undefined;
+    const finePointer = window.matchMedia('(pointer: fine)').matches;
+    if (!finePointer) {
+      mouseX.set(0);
+      mouseY.set(0);
+      return undefined;
+    }
+
     const handleMouseMove = (e) => {
       const { clientX, clientY } = e;
       const moveX = (clientX - window.innerWidth / 2) / 60;

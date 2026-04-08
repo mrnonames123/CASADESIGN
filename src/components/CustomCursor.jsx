@@ -1,12 +1,18 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import gsap from 'gsap';
 
 const CustomCursor = () => {
   const cursorRef = useRef(null);
   const ringRef = useRef(null);
   const textRef = useRef(null);
+  const isPointerFine = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    if (!window.matchMedia) return false;
+    return window.matchMedia('(pointer: fine)').matches && window.matchMedia('(hover: hover)').matches;
+  }, []);
 
   useEffect(() => {
+    if (!isPointerFine) return undefined;
     const cursor = cursorRef.current;
     const ring = ringRef.current;
     const text = textRef.current;
@@ -68,7 +74,9 @@ const CustomCursor = () => {
       window.removeEventListener('mouseover', onMouseOver);
       window.removeEventListener('mouseout', onMouseOut);
     };
-  }, []);
+  }, [isPointerFine]);
+
+  if (!isPointerFine) return null;
 
   return (
     <>

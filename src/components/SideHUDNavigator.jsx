@@ -14,6 +14,13 @@ const SideHUDNavigator = ({ activeSection: activeSectionProp, scrollProgress }) 
   const { lenisRef } = useNavigation();
   const [activeSection, setActiveSection] = useState(activeSectionProp ?? sections[0].id);
   const trackRef = useRef(null);
+  const [tooltipId, setTooltipId] = useState(null);
+  const tooltipTimeoutRef = useRef(0);
+  const isCoarsePointer = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    if (!window.matchMedia) return false;
+    return window.matchMedia('(pointer: coarse)').matches;
+  }, []);
 
   const progress = useMemo(() => {
     const value = typeof scrollProgress === 'number' ? scrollProgress : 0;
@@ -53,6 +60,15 @@ const SideHUDNavigator = ({ activeSection: activeSectionProp, scrollProgress }) 
      document.querySelector(target)?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  useEffect(() => {
+    return () => {
+      if (tooltipTimeoutRef.current) {
+        window.clearTimeout(tooltipTimeoutRef.current);
+        tooltipTimeoutRef.current = 0;
+      }
+    };
+  }, []);
+
   return (
     <div className="fixed right-4 md:right-12 top-1/2 -translate-y-1/2 z-[100] flex flex-col items-end gap-6 md:gap-10">
       
@@ -66,18 +82,34 @@ const SideHUDNavigator = ({ activeSection: activeSectionProp, scrollProgress }) 
         aria-hidden="true"
       />
 
-      {sections.map((s, idx) => (
-        <div key={s.id} className="relative flex items-center group">
+      {sections.map((s) => (
+        <div
+          key={s.id}
+          className="relative flex items-center group"
+          onMouseEnter={() => {
+            if (isCoarsePointer) return;
+            setTooltipId(s.id);
+          }}
+          onMouseLeave={() => {
+            if (isCoarsePointer) return;
+            setTooltipId(null);
+          }}
+        >
           
           <motion.button
-            onClick={() => scrollTo(s.id)}
-            className="flex items-center justify-center p-2"
+            onClick={() => {
+              scrollTo(s.id);
+              setTooltipId(s.id);
+              if (tooltipTimeoutRef.current) window.clearTimeout(tooltipTimeoutRef.current);
+              tooltipTimeoutRef.current = window.setTimeout(() => setTooltipId(null), 1200);
+            }}
+            className="flex items-center justify-center p-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-casa-bronze/70"
             aria-label={`Scroll to ${s.short}`}
           >
              {/* INDICATOR DOT */}
              <div className="relative flex items-center justify-center">
                 <AnimatePresence>
-                  {activeSection === s.id && (
+                 {activeSection === s.id && (
                     <motion.div 
                        initial={{ opacity: 0, scale: 0 }}
                        animate={{ opacity: 1, scale: 1 }}
@@ -90,6 +122,21 @@ const SideHUDNavigator = ({ activeSection: activeSectionProp, scrollProgress }) 
                 <div className={`w-1.5 h-1.5 rounded-full z-10 transition-all duration-500 ${activeSection === s.id ? 'bg-[#A68A64] shadow-[0_0_12px_#A68A64]' : 'bg-white/10 group-hover:bg-white/40'}`} />
              </div>
           </motion.button>
+
+          <AnimatePresence>
+            {tooltipId === s.id && (
+              <motion.div
+                initial={{ opacity: 0, x: 8 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 8 }}
+                className="pointer-events-none absolute right-10 whitespace-nowrap rounded-full border border-white/10 bg-black/60 px-3 py-2 backdrop-blur-md"
+              >
+                <span className="font-mono text-[9px] tracking-[0.35em] uppercase text-white/70">
+                  {s.short}
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
           
           {/* HOVER SCAN BAR */}
           <motion.div 
