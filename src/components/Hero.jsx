@@ -182,7 +182,7 @@ const Hero = ({ animateIn = false, onExperience, hasExperienced, isAtTop = true,
 
         {/* Action Button & Indicator (Optimized Glassmorphism) */}
         {isAtTop && !isTransitioning && (
-          <div className="absolute bottom-[56vh] sm:bottom-[38vh] md:bottom-[14vh] left-1/2 -translate-x-1/2 z-20 flex flex-col items-center w-full px-6 pointer-events-auto">
+          <div className="absolute bottom-[22vh] sm:bottom-[38vh] md:bottom-[14vh] left-1/2 -translate-x-1/2 z-20 flex flex-col items-center w-full px-6 pointer-events-auto">
             <motion.div 
               className="flex flex-col items-center gap-10 w-full"
               initial={{ opacity: 0, y: 40 }}

@@ -135,18 +135,19 @@ const AIChatbot = ({ hasExperienced = false, activeSection = 'hero-section' }) =
             className="pointer-events-auto group flex items-center gap-3 sm:gap-4 rounded-full border border-[#A68A64]/20 bg-black/60 backdrop-blur-2xl p-3.5 sm:px-6 sm:py-3.5 shadow-[0_25px_80px_rgba(0,0,0,0.85)] hover:border-[#A68A64]/40 transition-all relative overflow-hidden"
             aria-label="Open CASA AI"
           >
-            <div className="flex animate-pulse items-center justify-center p-1.5 bg-[#A68A64]/10 rounded-full">
+            <div className="flex items-center justify-center p-2 bg-[#A68A64]/20 rounded-full ring-2 ring-[#A68A64]/40 shadow-[0_0_20px_rgba(166,138,100,0.4)] group-hover:shadow-[0_0_30px_rgba(166,138,100,0.6)] transition-all">
               <svg 
                 className="w-4 h-4 text-[#A68A64]" 
-                fill="none" 
-                stroke="currentColor" 
+                fill="currentColor" 
                 viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
               </svg>
             </div>
-            <span className="hidden sm:inline font-body text-[11px] uppercase tracking-[0.42em] text-white/80 group-hover:text-white transition-colors drop-shadow-[0_10px_22px_rgba(0,0,0,0.9)]">
-              CASA AI
+            <span className="font-body text-[10px] sm:text-[11px] uppercase tracking-[0.42em] text-white/90 group-hover:text-white transition-colors drop-shadow-[0_10px_22px_rgba(0,0,0,0.9)]">
+              <span className="inline sm:hidden">AI</span>
+              <span className="hidden sm:inline">CASA AI</span>
             </span>
             {/* Ambient Pulse Ring */}
             <div className="absolute inset-0 rounded-full border border-[#A68A64]/20 animate-ping opacity-20 pointer-events-none" />

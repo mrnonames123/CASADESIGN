@@ -25,8 +25,10 @@ const Navbar = ({ hasExperienced, onExperience }) => {
   ];
 
   const scrollTo = useCallback((id) => {
-    if (!hasExperienced && id !== 'hero-section') {
-       onExperience?.();
+    if (id === 'hero-section') {
+       onExperience?.(false);
+    } else if (!hasExperienced) {
+       onExperience?.(true);
     }
 
     if (lenisRef?.scrollTo) {

@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect, useRef, useState } from 'react';
+import React, { Suspense, useEffect, useRef, useState, useCallback } from 'react';
 import { HelmetProvider, Helmet } from 'react-helmet-async';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -91,8 +91,8 @@ function AppScene() {
     document.body.style.background = '#0a0a0a';
   }, []);
 
-  const handleExperience = () => {
-    setHasExperienced(true);
+  const handleExperience = (val = true) => {
+    setHasExperienced(val);
   };
 
   useEffect(() => {
@@ -141,14 +141,17 @@ function AppScene() {
         });
       }
 
-      // Only mark "experienced" after a meaningful scroll so the hero title/button
-      // doesn't disappear on tiny scrolls / resize jumps.
-      if (!hasExperiencedRef.current) {
-        const threshold = Math.min(260, window.innerHeight * 0.35);
-        if (e.scroll > threshold) {
-          hasExperiencedRef.current = true;
-          setHasExperienced(true);
-        }
+      // RESET: If the user scrolls back to the very top, allow the introduction
+      // to reset so the title and "Experience Now" button can reappear.
+      if (e.scroll < 10 && hasExperiencedRef.current) {
+          hasExperiencedRef.current = false;
+          setHasExperienced(false);
+      } else if (!hasExperiencedRef.current) {
+          const threshold = Math.min(260, window.innerHeight * 0.35);
+          if (e.scroll > threshold) {
+            hasExperiencedRef.current = true;
+            setHasExperienced(true);
+          }
       }
     });
     
@@ -168,9 +171,6 @@ function AppScene() {
       lenis.destroy();
     };
   }, [appLoaded, setLenisRef]);
-
-  // Initial Narrative Sequence (Act I: Delaying title) - handled in Hero.jsx
-  // Act II: Transition (The Warp) - triggered onExperience
 
   useGSAP(() => {
     if (!appLoaded) return;
