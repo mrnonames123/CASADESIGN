@@ -277,7 +277,7 @@ function AppScene() {
       className={`min-h-screen bg-transparent text-[#FAF9F6] font-[Inter,sans-serif] font-light selection:bg-[#A68A64] selection:text-black relative`}
     >
       <motion.div
-        className="fixed left-1/2 bottom-24 -translate-x-1/2 z-[10050] pointer-events-none px-4 w-full flex justify-center"
+        className="fixed left-1/2 top-[92px] md:top-[104px] -translate-x-1/2 z-[10050] pointer-events-none px-4 flex justify-center"
         initial={false}
         animate={introHint ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 8, scale: 0.98 }}
         transition={{ duration: 0.35, ease: [0.22, 0.9, 0.24, 1] }}
