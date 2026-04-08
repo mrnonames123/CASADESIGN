@@ -196,20 +196,20 @@ const Navbar = ({ hasExperienced, onExperience }) => {
               aria-modal="true"
               aria-label="Site navigation"
               ref={mobilePanelRef}
-              className="fixed left-4 right-4 top-[88px] md:top-[104px] z-[9500] lg:hidden rounded-[28px] border border-white/10 bg-[rgba(10,10,10,0.78)] backdrop-blur-2xl shadow-[0_30px_90px_rgba(0,0,0,0.9)] overflow-hidden"
+              className="fixed left-6 right-6 top-[112px] md:top-[128px] z-[9500] lg:hidden rounded-[32px] border border-white/10 bg-[rgba(10,10,10,0.82)] backdrop-blur-3xl shadow-[0_40px_100px_rgba(0,0,0,0.92)] overflow-hidden"
               initial={{ opacity: 0, y: -12, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.98 }}
-              transition={{ duration: 0.25, ease: [0.22, 0.9, 0.24, 1] }}
+              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
             >
-              <div className="px-5 py-4">
-                <div className="text-[8px] font-mono uppercase tracking-[0.55em] text-white/35">
+              <div className="px-8 pt-8 pb-4">
+                <div className="text-[9px] font-mono uppercase tracking-[0.6em] text-[#A68A64]">
                   Navigation
                 </div>
               </div>
-              <div className="h-px w-full bg-white/10" />
+              <div className="mx-8 h-px bg-white/5" />
 
-              <div className="p-4 flex flex-col gap-2">
+              <div className="px-3 py-6 flex flex-col gap-1">
                 {links.map((link, idx) => (
                   <button
                     key={`m_${link.id}`}
@@ -217,26 +217,29 @@ const Navbar = ({ hasExperienced, onExperience }) => {
                     ref={idx === 0 ? firstMenuItemRef : undefined}
                     onClick={() => {
                       setIsMenuOpen(false);
-                      scrollTo(link.id);
+                      setTimeout(() => scrollTo(link.id), 300);
                     }}
-                    className="w-full text-left px-5 py-4 rounded-2xl border border-white/5 bg-white/[0.03] hover:bg-white/[0.06] hover:border-white/10 transition-colors"
+                    className="group w-full text-left px-5 py-4 rounded-2xl flex items-center justify-between hover:bg-white/[0.03] transition-all duration-500"
                   >
-                    <div className="font-body text-[10px] uppercase tracking-[0.38em] text-white/80">
+                    <div className="font-display text-[11px] uppercase tracking-[0.45em] text-white/60 group-hover:text-white group-hover:translate-x-1 transition-all">
                       {link.name}
                     </div>
+                    <div className="w-1.5 h-1.5 rounded-full bg-[#A68A64] opacity-0 group-hover:opacity-100 scale-0 group-hover:scale-100 transition-all duration-500" />
                   </button>
                 ))}
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    scrollTo('contact-section');
-                  }}
-                  className="mt-2 w-full px-5 py-4 rounded-2xl border border-[#A68A64]/40 bg-[#A68A64]/10 text-white font-body text-[10px] uppercase tracking-[0.5em] hover:bg-[#A68A64] hover:text-black transition-all duration-700"
-                >
-                  Inquire
-                </button>
+                <div className="px-5 mt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      setTimeout(() => scrollTo('contact-section'), 300);
+                    }}
+                    className="w-full px-6 py-5 rounded-2xl border border-[#A68A64]/30 bg-[#A68A64]/10 text-white font-body text-[10px] uppercase tracking-[0.6em] hover:bg-[#A68A64] hover:text-black transition-all duration-700 shadow-xl"
+                  >
+                    Inquire
+                  </button>
+                </div>
               </div>
             </motion.div>
           </>

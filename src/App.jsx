@@ -91,6 +91,21 @@ function AppScene() {
     document.body.style.background = '#0a0a0a';
   }, []);
 
+  // SCROLL LOCK: Ensure the user cannot scroll the narrative stack during preloading
+  useEffect(() => {
+    if (preloaderActive) {
+      document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none'; // Prevent swipe/elastic scrolling peaks
+    } else {
+      document.body.style.overflow = '';
+      document.body.style.touchAction = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.touchAction = '';
+    };
+  }, [preloaderActive]);
+
   const handleExperience = (val = true) => {
     setHasExperienced(val);
   };
@@ -308,12 +323,7 @@ function AppScene() {
 
       <CustomCursor />
 
-      {preloaderActive && (
-        <Preloader
-          onReady={() => setAppLoaded(true)}
-          onExited={() => setPreloaderActive(false)}
-        />
-      )}
+
 
       {appLoaded && (
         <Navbar 
@@ -485,6 +495,14 @@ function AppScene() {
         body { font-family: 'Inter', sans-serif; font-weight: 300; background: #050505; }
         h2 { font-family: 'Playfair Display', serif; }
       `}} />
+
+      {/* RENDERED LAST TO ENSURE TOP-LEVEL LAYERPRIORITY */}
+      {preloaderActive && (
+        <Preloader
+          onReady={() => setAppLoaded(true)}
+          onExited={() => setPreloaderActive(false)}
+        />
+      )}
     </div>
   );
 }

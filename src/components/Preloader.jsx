@@ -502,7 +502,7 @@ const Preloader = ({ setAppLoaded, onReady, onExited }) => {
     }}>
       {isVisible && (
         <motion.div
-          className="casa-preloader fixed inset-0 z-[10000] flex flex-col items-center justify-center overflow-hidden select-none"
+          className="casa-preloader fixed inset-0 z-[50000] flex flex-col items-center justify-center overflow-hidden select-none touch-none"
           style={{ 
             pointerEvents: isExiting ? 'none' : 'auto', 
             position: 'fixed',
