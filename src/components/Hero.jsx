@@ -36,6 +36,33 @@ const Hero = ({ animateIn = false, onExperience, hasExperienced, onTitleShown })
   }, [mouseX, mouseY]);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+
+    const onKeyDown = (e) => {
+      const isSpace = e.code === 'Space' || e.key === ' ';
+      if (!isSpace) return;
+
+      const target = e.target;
+      const tagName = target?.tagName?.toLowerCase?.() || '';
+      const isEditable =
+        target?.isContentEditable ||
+        tagName === 'input' ||
+        tagName === 'textarea' ||
+        tagName === 'select';
+
+      if (isEditable) return;
+      if (window.scrollY > window.innerHeight * 0.9) return;
+
+      // Prevent the default "page scroll" behavior so we reliably scroll into the chair sequence.
+      e.preventDefault();
+      handleExperience();
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [handleExperience]);
+
+  useEffect(() => {
     if (animateIn && !hasExperienced) {
       const timer = setTimeout(() => setShowTitle(true), 1500);
       return () => clearTimeout(timer);

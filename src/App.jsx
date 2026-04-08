@@ -141,7 +141,6 @@ function AppScene() {
       if (!hasExperiencedRef.current && e.scroll > 40) {
         hasExperiencedRef.current = true;
         setHasExperienced(true);
-        flashIntroHint('Experience unlocked — scroll to explore.');
       }
     });
     
