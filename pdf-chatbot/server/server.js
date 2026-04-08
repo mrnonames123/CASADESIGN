@@ -202,9 +202,19 @@ app.post("/inquiry", async (req, res) => {
   try {
     const { name, email } = req.body
     const project = req.body?.project ?? req.body?.message
+    const website = (req.body?.website || "").toString().trim() // honeypot
+
+    if (website) {
+      return res.json({ ok: true }) // silently accept bots
+    }
 
     if (!name || !email || !project) {
       return res.status(400).json({ error: "Name, email, and project brief are required." })
+    }
+
+    const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRe.test(String(email).trim())) {
+      return res.status(400).json({ error: "Please enter a valid email address." })
     }
 
     console.log("📨 NEW CONTACT INQUIRY:")
@@ -212,15 +222,73 @@ app.post("/inquiry", async (req, res) => {
     console.log("PROJECT:", project)
     console.log("-----------------------")
 
-    // TODO: Integrate with Nodemailer or SendGrid here
-    // For now, we simulate a successful database/email "transmission"
-    
-    res.json({ ok: true, message: "Inquiry received successfully." })
+    const resendKey = (process.env.RESEND_API_KEY || "").trim()
+    const to = (process.env.INQUIRY_TO_EMAIL || "").trim()
+    const from = (process.env.INQUIRY_FROM_EMAIL || "onboarding@resend.dev").trim()
+
+    if (!resendKey || !to) {
+      return res.status(501).json({
+        ok: false,
+        error: "Email delivery is not configured.",
+        missing: {
+          RESEND_API_KEY: !resendKey,
+          INQUIRY_TO_EMAIL: !to
+        }
+      })
+    }
+
+    const subject = `New inquiry from ${name}`
+    const text = `New Casa Design inquiry\n\nName: ${name}\nEmail: ${email}\n\nMessage:\n${project}\n`
+
+    const html = `
+      <div style="font-family:Inter,Arial,sans-serif;line-height:1.6">
+        <h2 style="margin:0 0 12px">New Casa Design inquiry</h2>
+        <p style="margin:0 0 10px"><strong>Name:</strong> ${escapeHtml(name)}</p>
+        <p style="margin:0 0 10px"><strong>Email:</strong> ${escapeHtml(email)}</p>
+        <p style="margin:16px 0 8px"><strong>Message:</strong></p>
+        <pre style="white-space:pre-wrap;background:#0b0b0b;color:#f5f5f7;padding:14px;border-radius:10px">${escapeHtml(project)}</pre>
+      </div>
+    `
+
+    const resp = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${resendKey}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        from,
+        to,
+        subject,
+        html,
+        text,
+        reply_to: email
+      })
+    })
+
+    const data = await resp.json().catch(() => ({}))
+    if (!resp.ok) {
+      return res.status(502).json({
+        ok: false,
+        error: data?.message || "Failed to send email."
+      })
+    }
+
+    res.json({ ok: true, id: data?.id || null })
   } catch (error) {
     console.error("🔥 CONTACT ERROR:", error)
     res.status(500).json({ error: "Failed to process inquiry." })
   }
 })
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;")
+}
 
 const PORT = Number(process.env.PORT) || 5000
 

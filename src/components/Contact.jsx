@@ -2,6 +2,30 @@ import React, { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Contact = () => {
+  const apiBase = useMemo(
+    () => (import.meta?.env?.VITE_CHATBOT_API_URL || '').trim(),
+    []
+  );
+
+  const resolvedApiBase = useMemo(() => {
+    const trimmed = (apiBase || '').trim();
+    if (!trimmed) return '';
+
+    if (typeof window === 'undefined') return trimmed;
+
+    const host = (window.location?.hostname || '').toLowerCase();
+    const isLocalHost =
+      host === 'localhost' ||
+      host === '127.0.0.1' ||
+      host === '[::1]';
+
+    const pointsToLocal =
+      /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/i.test(trimmed);
+
+    if (!isLocalHost && pointsToLocal) return '';
+    return trimmed.replace(/\/+$/, '');
+  }, [apiBase]);
+
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({ name: '', email: '', project: '', website: '' });
   const [status, setStatus] = useState('idle'); // idle | sending | error | success | config
@@ -32,7 +56,8 @@ const Contact = () => {
     setErrorMessage('');
 
     try {
-      const response = await fetch('/api/inquiry', {
+      const endpoint = resolvedApiBase ? `${resolvedApiBase}/inquiry` : '/api/inquiry';
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
