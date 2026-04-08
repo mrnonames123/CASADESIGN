@@ -28,6 +28,9 @@ import AboutPage from './pages/AboutPage';
 import SideHUDNavigator from './components/SideHUDNavigator';
 
 gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
+// 120FPS Performance Path: High-priority ticker synchronization
+gsap.ticker.fps(120);
+gsap.ticker.lagSmoothing(0); // Disable lag smoothing to prevent visual catches at high refresh rates
 
 function AppScene() {
   const containerRef = useRef(null);
@@ -35,6 +38,7 @@ function AppScene() {
   const [preloaderActive, setPreloaderActive] = useState(true);
   const [hasExperienced, setHasExperienced] = useState(false);
   const [heroTitleShown, setHeroTitleShown] = useState(false);
+  const [isGateActive, setIsGateActive] = useState(false);
   // Keep a ref for high-frequency scroll updates so the 3D canvas doesn't re-render on every scroll tick.
   const scrollProgressRef = useRef(0);
   // UI can use a state snapshot (updated at most once per rAF).
@@ -91,11 +95,11 @@ function AppScene() {
         navigator.maxTouchPoints > 0);
 
     const lenis = new Lenis({
-      // Keep the "slow premium" feel, but avoid laggy/uneven scroll on phones.
-      lerp: prefersReducedMotion ? 1 : (isTouchDevice ? 0.22 : 0.14),
+      // 120FPS Optimization: Increased responsiveness for high-refresh displays
+      lerp: prefersReducedMotion ? 1 : (isTouchDevice ? 0.20 : 0.125),
       syncTouch: false,
       wheelMultiplier: 1.0,
-      touchMultiplier: 1.05,
+      touchMultiplier: 1.02,
       smoothWheel: !prefersReducedMotion,
       smoothTouch: !prefersReducedMotion && isTouchDevice,
       infinite: false,
@@ -187,6 +191,7 @@ function AppScene() {
         onLeaveBack: () => { gateMetricsRef.current.pastEnd = false; },
         onToggle: (self) => {
           gateMetricsRef.current.active = self.isActive;
+          setIsGateActive(self.isActive);
         },
         onUpdate: (self) => {
           if (!gateTL) return;
@@ -279,7 +284,10 @@ function AppScene() {
 
       {appLoaded && (
         <Suspense fallback={null}>
-          <AIChatbot hasExperienced={hasExperienced} activeSection={currentView} />
+          <AIChatbot
+            hasExperienced={hasExperienced}
+            activeSection={isGateActive ? 'mission-vision-wrapper' : currentView}
+          />
         </Suspense>
       )}
 
@@ -376,19 +384,19 @@ function AppScene() {
                       </p>
                     </div>
                     
-                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-12 pt-16 border-t border-white/5 w-full">
-                     {[
-                       { l: "Proprietary Designs", v: "150+" },
-                       { l: "Architectural Nodes", v: "12" },
-                       { l: "Masterworks", v: "42" },
-                       { l: "Archival Series", v: "04" }
-                     ].map((s, i) => (
-                      <div key={i} className="stat-item flex flex-col items-center gap-2">
-                        <span className="text-[18px] md:text-3xl font-display text-white italic">{s.v}</span>
-                        <span className="sr-only">{s.l}</span>
-                      </div>
-                    ))}
-                  </div>
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 md:gap-x-12 gap-y-10 pt-16 border-t border-white/5 w-full">
+                      {[
+                        { l: "Proprietary Designs", v: "150+" },
+                        { l: "Architectural Nodes", v: "12" },
+                        { l: "Masterworks", v: "42" },
+                        { l: "Archival Series", v: "04" }
+                      ].map((s, i) => (
+                       <div key={i} className="stat-item flex flex-col items-center text-center gap-3">
+                         <span className="text-[20px] md:text-4xl font-display text-white italic drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)] leading-none">{s.v}</span>
+                         <span className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] text-[#A68A64]/80 font-bold max-w-[120px] md:max-w-none">{s.l}</span>
+                       </div>
+                     ))}
+                   </div>
                  </div>
                </div>
             </div>

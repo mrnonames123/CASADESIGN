@@ -253,9 +253,9 @@ function HybridScene({ scrollProgressRef, scrollProgress, hasExperienced, heroTi
     const isPortrait = viewport.aspect < 1;
     const isUltraWide = viewport.aspect > 2;
 
-    // 2. LATERAL BALANCE - Responds to screen width to prevent overlap with side text on mobile
-    const VISION_X = isPortrait ? -0.4 : -1.25;
-    const MISSION_X = isPortrait ? 0.4 : 1.25;
+    // 2. LATERAL BALANCE - Keep composition clear but reduce lateral "swim" (less confusing motion).
+    const VISION_X = isPortrait ? -0.25 : -0.75;
+    const MISSION_X = isPortrait ? 0.25 : 0.75;
     const CENTER_X = 0;
 
     let targetX = CENTER_X;
@@ -294,10 +294,10 @@ function HybridScene({ scrollProgressRef, scrollProgress, hasExperienced, heroTi
         : (hasExperienced ? -1.25 : heroTitleShown ? -1.45 : -1.25);
 
       chairBaseYRef.current = THREE.MathUtils.damp(chairBaseYRef.current, targetChairBaseY, 4.5, dt);
-      groupRef.current.position.y = chairBaseYRef.current + Math.sin(t * 0.75) * 0.03;
+      groupRef.current.position.y = chairBaseYRef.current + Math.sin(t * 0.75) * 0.015;
 
       // Keep subtle horizontal life, and make it stronger during "About" so it never feels like it stops.
-      const driftStrength = inGate && gateTime >= 15 ? 0.12 : 0.06;
+      const driftStrength = inGate && gateTime >= 15 ? 0.06 : 0.03;
       chairBaseXRef.current = THREE.MathUtils.damp(chairBaseXRef.current, 0, 4.5, dt);
       groupRef.current.position.x = chairBaseXRef.current + Math.sin(t * 0.35) * driftStrength;
       
@@ -336,7 +336,7 @@ function HybridScene({ scrollProgressRef, scrollProgress, hasExperienced, heroTi
         }
       }
 
-      const yawSway = Math.sin(t * 0.4) * (inGate && gateTime >= 15 ? 0.14 : 0.06);
+      const yawSway = Math.sin(t * 0.4) * (inGate && gateTime >= 15 ? 0.05 : 0.02);
       groupRef.current.rotation.y = THREE.MathUtils.damp(groupRef.current.rotation.y, targetYaw + yawSway, 7.0, dt);
     }
 
@@ -378,13 +378,16 @@ const MainBackgroundCanvas = ({ scrollProgressRef, scrollProgress = 0, hasExperi
     <div className="fixed inset-0 z-0 pointer-events-none bg-black">
       <Canvas
         className="w-full h-full"
-        dpr={1} // Lock to 1.0 for maximum performance (60fps priority)
+        // 120FPS Performance Path: Responsive DPR with frame-rate priority
+        dpr={[1, 1.5]} 
         gl={{ 
-          antialias: false, // Turn off MSAA for performance
+          antialias: false,
           alpha: true, 
           powerPreference: 'high-performance',
           stencil: false,
-          depth: true
+          depth: true,
+          precision: 'lowp', // Maximizes fragment shader throughput for 120fps
+          preserveDrawingBuffer: false
         }}
         camera={{ position: [0, 0, 5.2], fov: 32 }}
         onCreated={({ gl }) => {
