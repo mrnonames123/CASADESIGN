@@ -84,17 +84,25 @@ const Hero = ({ animateIn = false, onExperience, hasExperienced, isAtTop = true,
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [isTransitioning, lenisRef, onExperience]);
 
+  const [showAction, setShowAction] = useState(false);
+
   useEffect(() => {
     if (animateIn) {
-      const timer = setTimeout(() => setShowTitle(true), 1500);
-      return () => clearTimeout(timer);
+      // Faster, more direct narrative landing sequence
+      const t1 = setTimeout(() => setShowTitle(true), 500);
+      const t2 = setTimeout(() => setShowAction(true), 1200);
+      return () => {
+        clearTimeout(t1);
+        clearTimeout(t2);
+      };
     }
   }, [animateIn]);
 
   useEffect(() => {
     if (!animateIn) {
-      didNotifyTitleRef.current = false;
-      setShowTitle(false);
+       didNotifyTitleRef.current = false;
+       setShowTitle(false);
+       setShowAction(false);
     }
   }, [animateIn]);
 
@@ -109,8 +117,6 @@ const Hero = ({ animateIn = false, onExperience, hasExperienced, isAtTop = true,
       setIsTransitioning(false);
     }
   }, [hasExperienced]);
-
-
 
   return (
     <section
@@ -186,8 +192,8 @@ const Hero = ({ animateIn = false, onExperience, hasExperienced, isAtTop = true,
             <motion.div 
               className="flex flex-col items-center gap-10 w-full"
               initial={{ opacity: 0, y: 40 }}
-              animate={showTitle ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 1.5, delay: 1.2, ease: "circOut" }}
+              animate={showAction ? { opacity: 1, y: 0 } : {}}
+              transition={{ duration: 1.2, ease: "circOut" }}
             >
               <motion.button
                 onClick={handleExperience}

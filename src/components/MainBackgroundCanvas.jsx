@@ -158,7 +158,8 @@ function HybridScene({ scrollProgressRef, scrollProgress, hasExperienced, heroTi
   const chairBaseYRef = useRef(-1.05);
   const chairBaseXRef = useRef(0);
   
-  const atriumTexture = useTexture('/hero-liquid.jpg');
+  // PRE-LOAD the cinematic environment texture to ensure instant visibility after proceed
+  const atriumTexture = useTexture('/hero-background-new.png');
   
   // PERFORMANCE: High-end texture tuning
   useEffect(() => {

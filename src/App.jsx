@@ -293,15 +293,17 @@ function AppScene() {
       </motion.div>
       <div className="casa-grain"></div>
       
-      {/* GLOBAL 3D CANVAS (Shared Camera & Lights) */}
-      {!preloaderActive && (
-        <MainBackgroundCanvas 
-          scrollProgressRef={scrollProgressRef}
-          scrollProgress={0}
-          hasExperienced={hasExperienced}
-          heroTitleShown={heroTitleShown}
-          gateMetricsRef={gateMetricsRef}
-        />
+      {/* GLOBAL 3D CANVAS (Always rendered after initial mount to pre-load textures) */}
+      {canvasMounted && (
+        <div style={{ opacity: preloaderActive ? 0 : 1, transition: 'opacity 1.5s ease-out' }}>
+          <MainBackgroundCanvas 
+            scrollProgressRef={scrollProgressRef}
+            scrollProgress={0}
+            hasExperienced={hasExperienced}
+            heroTitleShown={heroTitleShown}
+            gateMetricsRef={gateMetricsRef}
+          />
+        </div>
       )}
 
       <CustomCursor />
