@@ -68,7 +68,7 @@ function BloomComposer({ enabled }) {
 }
 
 // LIQUID IMAGE COMPONENT WITH SHADER
-const LiquidAtrium = ({ texture, scrollProgress, hasExperienced, viewport }) => {
+const LiquidAtrium = ({ texture, scrollProgressRef, scrollProgress, viewport }) => {
   const meshRef = useRef();
   
   const shaderArgs = useMemo(() => ({
@@ -130,18 +130,24 @@ const LiquidAtrium = ({ texture, scrollProgress, hasExperienced, viewport }) => 
     `
   }), [texture, viewport.aspect]);
 
-  useFrame((state) => {
+  useFrame((state, dt) => {
     if (!meshRef.current) return;
     const mat = meshRef.current.material;
     mat.uniforms.uTime.value = state.clock.getElapsedTime();
     mat.uniforms.uAspect.value = viewport.aspect;
     
-    // INSTANT WARP ON EXPERIENCE
-    const targetWarp = hasExperienced ? 1.0 : 0;
-    mat.uniforms.uWarp.value = THREE.MathUtils.lerp(mat.uniforms.uWarp.value, targetWarp, 0.15);
+    // Fade the hero background out as we leave the top of the page, and bring it back when returning.
+    // This avoids "missing hero BG" when scrolling back up after the experience has unlocked.
+    const progressValue =
+      typeof scrollProgressRef?.current === 'number'
+        ? scrollProgressRef.current
+        : (typeof scrollProgress === 'number' ? scrollProgress : 0);
+
+    const targetWarp = THREE.MathUtils.smoothstep(progressValue, 0.02, 0.08);
+    mat.uniforms.uWarp.value = THREE.MathUtils.damp(mat.uniforms.uWarp.value, targetWarp, 7.5, dt);
     
     // Visibility kill for total darkness
-    meshRef.current.visible = mat.uniforms.uWarp.value < 0.99 && !hasExperienced;
+    meshRef.current.visible = mat.uniforms.uWarp.value < 0.995;
   });
 
   return (
@@ -356,8 +362,8 @@ function HybridScene({ scrollProgressRef, scrollProgress, hasExperienced, heroTi
       {/* SHADER-BASED LIQUID BACKGROUND */}
       <LiquidAtrium 
         texture={atriumTexture} 
+        scrollProgressRef={scrollProgressRef}
         scrollProgress={scrollProgress} 
-        hasExperienced={hasExperienced} 
         viewport={viewport}
       />
 
@@ -374,6 +380,38 @@ function HybridScene({ scrollProgressRef, scrollProgress, hasExperienced, heroTi
 }
 
 const MainBackgroundCanvas = ({ scrollProgressRef, scrollProgress = 0, hasExperienced = false, heroTitleShown = false, gateMetricsRef }) => {
+  const vignetteRef = useRef(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    if (!scrollProgressRef || !('current' in scrollProgressRef)) return undefined;
+
+    let raf = 0;
+
+    const clamp01 = (v) => Math.min(1, Math.max(0, v));
+    const smoothstep = (edge0, edge1, x) => {
+      const t = clamp01((x - edge0) / (edge1 - edge0));
+      return t * t * (3 - 2 * t);
+    };
+
+    const tick = () => {
+      const node = vignetteRef.current;
+      if (node) {
+        const p = typeof scrollProgressRef.current === 'number' ? scrollProgressRef.current : 0;
+        // Strong readability at the hero/top; fade out as you scroll down, and restore when you come back up.
+        const fade = smoothstep(0.04, 0.14, clamp01(p));
+        const opacity = 0.78 * (1 - fade);
+        node.style.opacity = String(opacity);
+      }
+      raf = window.requestAnimationFrame(tick);
+    };
+
+    raf = window.requestAnimationFrame(tick);
+    return () => {
+      if (raf) window.cancelAnimationFrame(raf);
+    };
+  }, [scrollProgressRef]);
+
   return (
     <div className="fixed inset-0 z-0 pointer-events-none bg-black">
       <Canvas
@@ -418,10 +456,11 @@ const MainBackgroundCanvas = ({ scrollProgressRef, scrollProgress = 0, hasExperi
       />
       {/* INTENSIFIED VIGNETTE FOR VISIBILITY */}
       <div 
+        ref={vignetteRef}
         className="absolute inset-0 pointer-events-none transition-opacity duration-1500"
         style={{
           background: 'radial-gradient(circle at 50% 50%, transparent 10%, rgba(0,0,0,0.92) 85%, #000 100%)',
-          opacity: hasExperienced ? 0 : 0.78
+          opacity: 0.78
         }}
       />
     </div>

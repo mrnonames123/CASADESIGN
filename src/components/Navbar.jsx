@@ -169,7 +169,7 @@ const Navbar = ({ hasExperienced, onExperience }) => {
          </div>
 
         {/* TERMINAL STATUS (RIGHT SIDE ON DESKTOP) */}
-        <div className="flex items-center gap-4">
+        <div className="hidden lg:flex items-center gap-4">
         </div>
 
       </div>
