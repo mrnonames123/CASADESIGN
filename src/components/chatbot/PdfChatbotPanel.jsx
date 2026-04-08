@@ -285,7 +285,7 @@ const PdfChatbotPanel = ({ apiBase = DEFAULT_API_BASE, onClose }) => {
               type="button"
               disabled={isSending}
               onClick={() => send(q.prompt)}
-              className="px-3 py-2 rounded-full uppercase transition-colors"
+              className="px-3 py-2 rounded-full uppercase transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-casa-bronze/70"
               style={{
                 border: '1px solid rgba(212,175,55,0.28)',
                 color: 'rgba(245,245,247,0.88)',
@@ -313,7 +313,7 @@ const PdfChatbotPanel = ({ apiBase = DEFAULT_API_BASE, onClose }) => {
                 send();
               }}
               placeholder={isSending ? 'Processing…' : 'Inquire about our design philosophy...'}
-              className="w-full resize-none bg-transparent outline-none"
+              className="w-full resize-none bg-transparent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-casa-bronze/70"
               style={{
                 color: 'rgba(245,245,247,0.88)',
                 fontFamily: '"Bodoni Moda","Didot","Bodoni MT","Playfair Display",serif',
@@ -332,7 +332,7 @@ const PdfChatbotPanel = ({ apiBase = DEFAULT_API_BASE, onClose }) => {
           <button
             type="submit"
             disabled={!canSend}
-            className="uppercase"
+            className="uppercase disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-casa-bronze/70"
             style={{
               color: canSend ? 'rgba(212,175,55,0.95)' : 'rgba(245,245,247,0.25)',
               fontFamily: '"Inter",sans-serif',

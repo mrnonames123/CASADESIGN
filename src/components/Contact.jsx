@@ -198,7 +198,7 @@ const Contact = () => {
                        value={formData.name}
                        onChange={handleInputChange}
                        placeholder="Full Name"
-                       className="w-full bg-transparent border-b border-white/10 py-4 font-body text-white focus:border-[#A68A64] transition-colors outline-none"
+                       className="w-full bg-transparent border-b border-white/10 py-4 font-body text-white focus:border-[#A68A64] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-casa-bronze/70"
                      />
                      <input 
                        type="email" 
@@ -206,7 +206,7 @@ const Contact = () => {
                        value={formData.email}
                        onChange={handleInputChange}
                        placeholder="Email Address"
-                       className="w-full bg-transparent border-b border-white/10 py-4 font-body text-white focus:border-[#A68A64] transition-colors outline-none"
+                       className="w-full bg-transparent border-b border-white/10 py-4 font-body text-white focus:border-[#A68A64] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-casa-bronze/70"
                      />
                    </div>
                    <button 
@@ -216,7 +216,7 @@ const Contact = () => {
                        nextStep();
                      }}
                      disabled={!canAdvance}
-                     className="mt-4 w-full py-5 rounded-full border border-[#A68A64]/30 bg-[#A68A64]/10 text-white font-body text-[10px] uppercase tracking-[0.5em] hover:bg-[#A68A64]/30 transition-all group overflow-hidden relative disabled:opacity-50 disabled:cursor-not-allowed"
+                     className="mt-4 w-full py-5 rounded-full border border-[#A68A64]/30 bg-[#A68A64]/10 text-white font-body text-[10px] uppercase tracking-[0.5em] hover:bg-[#A68A64]/30 transition-all group overflow-hidden relative disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-casa-bronze/70"
                    >
                       <span className="relative z-10 transition-transform group-hover:tracking-[0.8em]">Next Step</span>
                       <motion.div className="absolute inset-0 bg-[#A68A64]/20 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-700" />
@@ -246,7 +246,7 @@ const Contact = () => {
                          name="projectType"
                          value={formData.projectType}
                          onChange={handleInputChange}
-                         className="w-full bg-transparent border-b border-white/10 py-4 font-body text-white/90 focus:border-[#A68A64] transition-colors outline-none"
+                         className="w-full bg-transparent border-b border-white/10 py-4 font-body text-white/90 focus:border-[#A68A64] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-casa-bronze/70"
                        >
                          <option value="" className="bg-[#050505]">
                            Select…
@@ -277,7 +277,7 @@ const Contact = () => {
                          name="budgetRange"
                          value={formData.budgetRange}
                          onChange={handleInputChange}
-                         className="w-full bg-transparent border-b border-white/10 py-4 font-body text-white/90 focus:border-[#A68A64] transition-colors outline-none"
+                         className="w-full bg-transparent border-b border-white/10 py-4 font-body text-white/90 focus:border-[#A68A64] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-casa-bronze/70"
                        >
                          <option value="" className="bg-[#050505]">
                            Select…
@@ -308,7 +308,7 @@ const Contact = () => {
                          name="timeline"
                          value={formData.timeline}
                          onChange={handleInputChange}
-                         className="w-full bg-transparent border-b border-white/10 py-4 font-body text-white/90 focus:border-[#A68A64] transition-colors outline-none"
+                         className="w-full bg-transparent border-b border-white/10 py-4 font-body text-white/90 focus:border-[#A68A64] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-casa-bronze/70"
                        >
                          <option value="" className="bg-[#050505]">
                            Select…
@@ -336,7 +336,7 @@ const Contact = () => {
                          name="preferredContact"
                          value={formData.preferredContact}
                          onChange={handleInputChange}
-                         className="w-full bg-transparent border-b border-white/10 py-4 font-body text-white/90 focus:border-[#A68A64] transition-colors outline-none"
+                         className="w-full bg-transparent border-b border-white/10 py-4 font-body text-white/90 focus:border-[#A68A64] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-casa-bronze/70"
                        >
                          <option value="email" className="bg-[#050505]">
                            Email
@@ -357,7 +357,7 @@ const Contact = () => {
                      onChange={handleInputChange}
                      placeholder="Project brief (share scope, style, space, and any links). If you prefer WhatsApp/phone, include your number here."
                      rows="4"
-                     className="w-full bg-transparent border-b border-white/10 py-4 font-body text-white focus:border-[#A68A64] transition-colors outline-none resize-none"
+                     className="w-full bg-transparent border-b border-white/10 py-4 font-body text-white focus:border-[#A68A64] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-casa-bronze/70 resize-none"
                    />
 
                    {errorMessage && (
@@ -369,7 +369,7 @@ const Contact = () => {
                        type="button"
                        onClick={prevStep}
                        disabled={status === 'sending'}
-                       className="w-full py-5 rounded-full border border-white/10 bg-white/[0.03] text-white/70 font-body text-[10px] uppercase tracking-[0.5em] hover:bg-white/[0.06] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                       className="w-full py-5 rounded-full border border-white/10 bg-white/[0.03] text-white/70 font-body text-[10px] uppercase tracking-[0.5em] hover:bg-white/[0.06] transition-all disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-casa-bronze/70"
                      >
                        Back
                      </button>
@@ -378,7 +378,7 @@ const Contact = () => {
                        type="button"
                        onClick={handleSubmit}
                        disabled={!canAdvance}
-                       className="w-full py-5 rounded-full border border-[#A68A64]/30 bg-[#A68A64]/10 text-white font-body text-[10px] uppercase tracking-[0.5em] hover:bg-[#A68A64]/30 transition-all group overflow-hidden relative disabled:opacity-50 disabled:cursor-not-allowed"
+                       className="w-full py-5 rounded-full border border-[#A68A64]/30 bg-[#A68A64]/10 text-white font-body text-[10px] uppercase tracking-[0.5em] hover:bg-[#A68A64]/30 transition-all group overflow-hidden relative disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-casa-bronze/70"
                      >
                         <span className="relative z-10 transition-transform group-hover:tracking-[0.8em]">
                           {status === 'sending' ? 'Sending…' : 'Send Inquiry'}

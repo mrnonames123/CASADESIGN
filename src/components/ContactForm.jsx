@@ -60,7 +60,7 @@ const ContactForm = () => {
                 <input
                   type="text"
                   placeholder="Name"
-                  className="w-full bg-transparent border-b border-casa-cream/10 focus:border-casa-bronze/40 outline-none py-3 font-body text-casa-cream/80 tracking-wide"
+                  className="w-full bg-transparent border-b border-casa-cream/10 focus:border-casa-bronze/40 py-3 font-body text-casa-cream/80 tracking-wide focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-casa-bronze/70"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
@@ -71,7 +71,7 @@ const ContactForm = () => {
                 <input
                   type="email"
                   placeholder="Email"
-                  className="w-full bg-transparent border-b border-casa-cream/10 focus:border-casa-bronze/40 outline-none py-3 font-body text-casa-cream/80 tracking-wide"
+                  className="w-full bg-transparent border-b border-casa-cream/10 focus:border-casa-bronze/40 py-3 font-body text-casa-cream/80 tracking-wide focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-casa-bronze/70"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
@@ -81,7 +81,7 @@ const ContactForm = () => {
                 <span className="sr-only">Message</span>
                 <textarea
                   placeholder="Tell us about your space..."
-                  className="w-full bg-transparent border-b border-casa-cream/10 focus:border-casa-bronze/40 outline-none py-3 font-body text-casa-cream/80 tracking-wide h-28 resize-none"
+                  className="w-full bg-transparent border-b border-casa-cream/10 focus:border-casa-bronze/40 py-3 font-body text-casa-cream/80 tracking-wide h-28 resize-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-casa-bronze/70"
                   value={formData.message}
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                   required
@@ -90,7 +90,7 @@ const ContactForm = () => {
 
               <button
                 type="submit"
-                className="magnetic-interactive mt-4 inline-flex items-center justify-center rounded-full border border-casa-bronze/45 bg-casa-bronze/85 hover:bg-casa-bronze transition-colors px-6 py-3"
+                className="magnetic-interactive mt-4 inline-flex items-center justify-center rounded-full border border-casa-bronze/45 bg-casa-bronze/85 hover:bg-casa-bronze transition-colors px-6 py-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-casa-bronze/70"
               >
                 <span className="font-body text-casa-charcoal tracking-[0.28em] uppercase text-[10px] font-semibold">
                   {status === 'loading' ? 'Sending…' : 'Schedule a Consultation'}
@@ -116,4 +116,3 @@ const ContactForm = () => {
 };
 
 export default ContactForm;
-

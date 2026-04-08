@@ -56,7 +56,7 @@ const BackgroundMusic = () => {
         onClick={toggleMusic}
         aria-pressed={isPlaying}
         aria-label={isPlaying ? 'Pause background music' : 'Play background music'}
-        className="group flex items-center gap-3 rounded-full bg-transparent border border-neutral-800/80 px-4 py-2 outline-none select-none transition-colors duration-300 hover:border-casa-bronze/60 hover:shadow-[0_0_18px_rgba(200,169,126,0.18)]"
+        className="group flex items-center gap-3 rounded-full bg-transparent border border-neutral-800/80 px-4 py-2 select-none transition-colors duration-300 hover:border-casa-bronze/60 hover:shadow-[0_0_18px_rgba(200,169,126,0.18)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-casa-bronze/70"
       >
         <span className="font-display text-[10px] tracking-[0.3em] uppercase text-neutral-500 group-hover:text-casa-cream transition-colors">
           {isPlaying ? 'Sound On' : 'Sound Off'}
