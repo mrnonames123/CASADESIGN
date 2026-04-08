@@ -460,12 +460,13 @@ const Preloader = ({ setAppLoaded, onReady, onExited }) => {
     const onKeyDown = (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
+        e.stopPropagation();
         handleEnter();
       }
     };
 
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    window.addEventListener('keydown', onKeyDown, { capture: true });
+    return () => window.removeEventListener('keydown', onKeyDown, { capture: true });
   }, [handleEnter, isExiting, showEnter]);
 
   useEffect(() => {
@@ -607,23 +608,25 @@ const Preloader = ({ setAppLoaded, onReady, onExited }) => {
           {/* Proceed button */}
           <AnimatePresence>
             {showEnter && !isExiting && (
-              <motion.button
-                type="button"
-                className="casa-preloader-hint absolute left-1/2 z-20"
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.6, ease: 'easeOut' }}
-                onClick={handleEnter}
-              >
-                <motion.span
-                  className="casa-preloader-hint__text uppercase"
-                  animate={{ opacity: [0.55, 1, 0.55], y: [0, -2, 0] }}
-                  transition={{ duration: 2.2, ease: 'easeInOut', repeat: Infinity }}
+              <div className="casa-preloader-hint-wrap absolute left-1/2 -translate-x-1/2 z-20">
+                <motion.button
+                  type="button"
+                  className="casa-preloader-hint"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.6, ease: 'easeOut' }}
+                  onClick={handleEnter}
                 >
-                  Proceed Now
-                </motion.span>
-              </motion.button>
+                  <motion.span
+                    className="casa-preloader-hint__text uppercase"
+                    animate={{ opacity: [0.55, 1, 0.55], y: [0, -2, 0] }}
+                    transition={{ duration: 2.2, ease: 'easeInOut', repeat: Infinity }}
+                  >
+                    Proceed Now
+                  </motion.span>
+                </motion.button>
+              </div>
             )}
           </AnimatePresence>
 

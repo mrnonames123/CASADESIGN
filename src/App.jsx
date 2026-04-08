@@ -43,8 +43,10 @@ function AppScene() {
   const introHintTimeoutRef = useRef(0);
   // Keep a ref for high-frequency scroll updates so the 3D canvas doesn't re-render on every scroll tick.
   const scrollProgressRef = useRef(0);
+  const scrollYRef = useRef(0);
   // UI can use a state snapshot (updated at most once per rAF).
   const [scrollProgress, setScrollProgress] = useState(0);
+  const [scrollY, setScrollY] = useState(0);
   const scrollRafRef = useRef(0);
   const [currentView, setCurrentView] = useState('hero-section'); 
   const { setLenisRef, lenisRef } = useNavigation();
@@ -129,18 +131,24 @@ function AppScene() {
       // Calculate global scroll progress for 3D state
       const progress = e.animatedScroll / (e.limit || 1);
       scrollProgressRef.current = progress;
+      scrollYRef.current = e.scroll ?? window.scrollY ?? 0;
 
       if (!scrollRafRef.current) {
         scrollRafRef.current = window.requestAnimationFrame(() => {
           scrollRafRef.current = 0;
           setScrollProgress(scrollProgressRef.current);
+          setScrollY(scrollYRef.current);
         });
       }
 
-      // If users scroll on mobile/desktop, treat it as the "experience" intent and keep scrolling natural.
-      if (!hasExperiencedRef.current && e.scroll > 40) {
-        hasExperiencedRef.current = true;
-        setHasExperienced(true);
+      // Only mark "experienced" after a meaningful scroll so the hero title/button
+      // doesn't disappear on tiny scrolls / resize jumps.
+      if (!hasExperiencedRef.current) {
+        const threshold = Math.min(260, window.innerHeight * 0.35);
+        if (e.scroll > threshold) {
+          hasExperiencedRef.current = true;
+          setHasExperienced(true);
+        }
       }
     });
     
@@ -199,7 +207,7 @@ function AppScene() {
         start: 'top top',
         endTrigger: '#archive-section',
         end: 'bottom top',
-        scrub: 2.2,
+        scrub: 1.2,
         invalidateOnRefresh: true,
         onEnter: () => { gateMetricsRef.current.pastEnd = false; },
         onEnterBack: () => { gateMetricsRef.current.pastEnd = false; },
@@ -262,6 +270,9 @@ function AppScene() {
     });
 
   }, { scope: containerRef, dependencies: [appLoaded] });
+
+  const heroTopThreshold = typeof window === 'undefined' ? 0 : window.innerHeight * 0.18;
+  const isHeroAtTop = scrollY <= heroTopThreshold;
 
   return (
     <div
@@ -333,6 +344,7 @@ function AppScene() {
             animateIn={appLoaded && !preloaderActive} 
             onExperience={handleExperience}
             hasExperienced={hasExperienced}
+            isAtTop={isHeroAtTop}
             onTitleShown={() => setHeroTitleShown(true)}
           />
         </div>
@@ -432,7 +444,7 @@ function AppScene() {
           </div>
 
           {/* TOTAL SCROLL WEIGHT FOR THE RED CARPET SEQUENCE */}
-          <div id="gate-scroll-track" className="h-[1600vh]" />
+          <div id="gate-scroll-track" className="h-[1100vh]" />
         </div>
 
         {/* ACT II/III: THE CRAFT (Archive detail) */}

@@ -4,7 +4,6 @@ import gsap from 'gsap';
 const CustomCursor = () => {
   const cursorRef = useRef(null);
   const ringRef = useRef(null);
-  const textRef = useRef(null);
   const isPointerFine = useMemo(() => {
     if (typeof window === 'undefined') return false;
     if (!window.matchMedia) return false;
@@ -15,7 +14,6 @@ const CustomCursor = () => {
     if (!isPointerFine) return undefined;
     const cursor = cursorRef.current;
     const ring = ringRef.current;
-    const text = textRef.current;
     if (!cursor || !ring) return;
     
     // Premium Lag Effect: The ring trails the main dot
@@ -46,7 +44,6 @@ const CustomCursor = () => {
           backgroundColor: 'rgba(166, 138, 100, 0.05)'
         });
         gsap.to(cursor, { scale: 0.5, opacity: 0, duration: 0.3 });
-        gsap.to(text, { opacity: 1, y: 0, scale: 1, duration: 0.4, ease: 'back.out(2)' });
       }
     };
     
@@ -62,7 +59,6 @@ const CustomCursor = () => {
           backgroundColor: 'transparent'
         });
         gsap.to(cursor, { scale: 1, opacity: 1, duration: 0.3 });
-        gsap.to(text, { opacity: 0, y: 10, scale: 0.8, duration: 0.3 });
       }
     };
 
@@ -98,13 +94,6 @@ const CustomCursor = () => {
         ref={cursorRef}
         className="fixed top-0 left-0 w-1.5 h-1.5 rounded-full pointer-events-none -translate-x-1/2 -translate-y-1/2 z-[10000] bg-casa-cream flex items-center justify-center"
       >
-        <span 
-          ref={textRef} 
-          className="opacity-0 font-body text-casa-cream font-medium text-[7px] tracking-[0.4em] pointer-events-none absolute uppercase whitespace-nowrap translate-y-0"
-          style={{ transform: 'scale(0.8)' }}
-        >
-          VIEW DETAIL
-        </span>
       </div>
     </>
   );

@@ -1,6 +1,19 @@
 import React, { useCallback, useRef } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion, useInView, useScroll, useTransform } from 'framer-motion';
 import { useNavigation } from '../context/NavigationContext';
+
+const AutoColorImage = ({ src, alt = '', className = '', initialClassName = '', activeClassName = '', amount = 0.45 }) => {
+  const ref = useRef(null);
+  const inView = useInView(ref, { amount, once: true });
+  return (
+    <img
+      ref={ref}
+      src={src}
+      alt={alt}
+      className={[className, inView ? activeClassName : initialClassName].filter(Boolean).join(' ')}
+    />
+  );
+};
 
 const ArchivalSeries = () => {
   const { lenisRef } = useNavigation();
@@ -64,23 +77,22 @@ const ArchivalSeries = () => {
              initial={{ opacity: 0, scale: 0.98 }}
              whileInView={{ opacity: 1, scale: 1 }}
              transition={{ duration: 1.2 }}
-             className="lg:col-span-7 lg:row-span-2 group relative overflow-hidden rounded-[50px] border border-white/5 bg-[#121212]"
+             className="lg:col-span-7 lg:row-span-2 relative overflow-hidden rounded-[50px] border border-white/5 bg-[#121212]"
           >
-             <img src="/portfolio-1.png" alt="" className="absolute inset-0 w-full h-full object-cover grayscale-[0.3] transition-transform duration-[1.5s] ease-out group-hover:scale-105 group-hover:grayscale-0" />
+             <AutoColorImage
+               src="/portfolio-1.png"
+               className="absolute inset-0 w-full h-full object-cover transition-all duration-[1400ms] ease-out"
+               initialClassName="grayscale-[0.35] brightness-75 scale-[1.02]"
+               activeClassName="grayscale-0 brightness-100 scale-105"
+             />
              <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-transparent to-transparent opacity-80" />
-             
-             {/* Digital Stamp */}
-             <div className="absolute top-10 left-10 glass-pill-premium px-5 py-3 rounded-full flex items-center gap-4 border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-700">
-                <div className="w-2 h-2 rounded-full bg-[#A68A64] animate-pulse" />
-                <span className="text-[8px] font-mono text-white tracking-[0.4em] uppercase">Status: ACTIVE_VIEW</span>
-             </div>
 
              <div className="absolute bottom-12 left-12 z-10 max-w-lg">
                 <span className="text-[10px] font-mono text-[#A68A64] uppercase tracking-[0.6em] block mb-6 px-4 py-1.5 border border-[#A68A64]/30 rounded-full w-fit bg-[#121212]/40 backdrop-blur-md">
                    REF: ATRIUM_0X8F
                 </span>
                 <h3 className="text-white font-display text-5xl md:text-7xl italic leading-tight tracking-[-0.02em]">The Living <span className="not-italic text-white/40">Atrium.</span></h3>
-                <p className="text-white/30 font-body text-[11px] uppercase tracking-[0.3em] mt-8 leading-relaxed opacity-0 group-hover:opacity-100 transition-all duration-700 transform translate-y-4 group-hover:translate-y-0">
+                <p className="text-white/30 font-body text-[11px] uppercase tracking-[0.3em] mt-8 leading-relaxed">
                   A multi-layered spatial experiment in warmth and architectural silence.
                 </p>
              </div>
@@ -91,10 +103,15 @@ const ArchivalSeries = () => {
              initial={{ opacity: 0, x: 40 }}
              whileInView={{ opacity: 1, x: 0 }}
              transition={{ duration: 1.2, delay: 0.2 }}
-             className="lg:col-span-5 group relative overflow-hidden rounded-[40px] border border-white/5 bg-[#121212]"
+             className="lg:col-span-5 relative overflow-hidden rounded-[40px] border border-white/5 bg-[#121212]"
           >
-             <img src="/portfolio-2.png" alt="" className="absolute inset-0 w-full h-full object-cover grayscale-[0.4] transition-all duration-[1s] group-hover:grayscale-0 group-hover:scale-105" />
-             <div className="absolute inset-0 bg-black/40 group-hover:bg-black/10 transition-colors duration-700" />
+             <AutoColorImage
+               src="/portfolio-2.png"
+               className="absolute inset-0 w-full h-full object-cover transition-all duration-[1200ms] ease-out"
+               initialClassName="grayscale-[0.45] brightness-75 scale-[1.02]"
+               activeClassName="grayscale-0 brightness-100 scale-105"
+             />
+             <div className="absolute inset-0 bg-black/30" />
              
              <div className="absolute bottom-10 left-10">
                 <span className="text-[8px] font-mono text-[#A68A64] uppercase tracking-[0.5em] mb-4 block">FOLDER_02 // RESIDENTIAL</span>
@@ -109,19 +126,25 @@ const ArchivalSeries = () => {
              transition={{ duration: 1.2, delay: 0.4 }}
              className="lg:col-span-5 grid grid-cols-2 gap-8"
           >
-             <div className="group relative overflow-hidden rounded-[30px] border border-white/5 h-[350px]">
-                <img src="/portfolio-3.png" alt="" className="w-full h-full object-cover grayscale transition-all duration-1000 group-hover:grayscale-0 group-hover:rotate-1" />
-                <div className="absolute inset-0 bg-[#A68A64]/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                   <span className="text-[9px] font-mono text-white tracking-[0.5em] uppercase px-4 py-2 bg-black/60 backdrop-blur-md rounded-full border border-white/10">VIEW_DETAIL</span>
-                </div>
+             <div className="relative overflow-hidden rounded-[30px] border border-white/5 h-[350px]">
+                <AutoColorImage
+                  src="/portfolio-3.png"
+                  className="w-full h-full object-cover transition-all duration-[1200ms] ease-out"
+                  initialClassName="grayscale-[0.55] brightness-75"
+                  activeClassName="grayscale-0 brightness-100"
+                  amount={0.5}
+                />
+                <div className="absolute inset-0 bg-[#A68A64]/10 opacity-0 pointer-events-none" />
              </div>
-             <div className="group relative overflow-hidden rounded-[30px] border border-white/5 h-[350px]">
-                <img src="/portfolio-4.png" alt="" className="w-full h-full object-cover grayscale transition-all duration-1000 group-hover:grayscale-0 group-hover:rotate-[-1deg]" />
-                <div className="absolute inset-0 bg-[#A68A64]/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                   <span className="text-[9px] font-mono text-white tracking-[0.5em] uppercase px-4 py-2 bg-black/60 backdrop-blur-md rounded-full border border-white/10">VIEW_DETAIL</span>
-                </div>
+             <div className="relative overflow-hidden rounded-[30px] border border-white/5 h-[350px]">
+                <AutoColorImage
+                  src="/portfolio-4.png"
+                  className="w-full h-full object-cover transition-all duration-[1200ms] ease-out"
+                  initialClassName="grayscale-[0.55] brightness-75"
+                  activeClassName="grayscale-0 brightness-100"
+                  amount={0.5}
+                />
+                <div className="absolute inset-0 bg-[#A68A64]/10 opacity-0 pointer-events-none" />
              </div>
           </motion.div>
 

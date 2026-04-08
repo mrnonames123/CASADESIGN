@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { motion, useMotionValue, useSpring } from 'framer-motion';
 import { useNavigation } from '../context/NavigationContext';
 
-const Hero = ({ animateIn = false, onExperience, hasExperienced, onTitleShown }) => {
+const Hero = ({ animateIn = false, onExperience, hasExperienced, isAtTop = true, onTitleShown }) => {
   const { lenisRef } = useNavigation();
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [showTitle, setShowTitle] = useState(false);
@@ -43,7 +43,7 @@ const Hero = ({ animateIn = false, onExperience, hasExperienced, onTitleShown })
     setTimeout(() => {
       if (lenisRef?.scrollTo) {
         lenisRef.scrollTo(target, { 
-          duration: 3.2, 
+          duration: 2.0, 
           easing: (t) => t === 1 ? 1 : 1 - Math.pow(2, -10 * t),
           lock: true,
           force: true
@@ -60,6 +60,9 @@ const Hero = ({ animateIn = false, onExperience, hasExperienced, onTitleShown })
     const onKeyDown = (e) => {
       const isSpace = e.code === 'Space' || e.key === ' ';
       if (!isSpace) return;
+      // If the preloader is visible, let it handle Space to "Proceed Now"
+      // and don't jump into the chair sequence.
+      if (document.querySelector('.casa-preloader')) return;
 
       const target = e.target;
       const tagName = target?.tagName?.toLowerCase?.() || '';
@@ -82,18 +85,18 @@ const Hero = ({ animateIn = false, onExperience, hasExperienced, onTitleShown })
   }, [isTransitioning, lenisRef, onExperience]);
 
   useEffect(() => {
-    if (animateIn && !hasExperienced) {
+    if (animateIn) {
       const timer = setTimeout(() => setShowTitle(true), 1500);
       return () => clearTimeout(timer);
     }
-  }, [animateIn, hasExperienced]);
+  }, [animateIn]);
 
   useEffect(() => {
-    if (!animateIn || hasExperienced) {
+    if (!animateIn) {
       didNotifyTitleRef.current = false;
       setShowTitle(false);
     }
-  }, [animateIn, hasExperienced]);
+  }, [animateIn]);
 
   useEffect(() => {
     if (!showTitle || didNotifyTitleRef.current) return;
@@ -178,7 +181,7 @@ const Hero = ({ animateIn = false, onExperience, hasExperienced, onTitleShown })
         </motion.div>
 
         {/* Action Button & Indicator (Optimized Glassmorphism) */}
-        {!hasExperienced && (
+        {isAtTop && !isTransitioning && (
           <div className="absolute bottom-[56vh] sm:bottom-[38vh] md:bottom-[14vh] left-1/2 -translate-x-1/2 z-20 flex flex-col items-center w-full px-6 pointer-events-auto">
             <motion.div 
               className="flex flex-col items-center gap-10 w-full"

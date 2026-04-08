@@ -74,7 +74,6 @@ const LiquidAtrium = ({ texture, scrollProgressRef, scrollProgress, viewport }) 
   const shaderArgs = useMemo(() => ({
     uniforms: {
       uTexture: { value: texture },
-      uTime: { value: 0 },
       uWarp: { value: 0 },
       uOpacity: { value: 1 },
       uAspect: { value: viewport.aspect }
@@ -89,7 +88,6 @@ const LiquidAtrium = ({ texture, scrollProgressRef, scrollProgress, viewport }) 
     `,
     fragmentShader: `
       uniform sampler2D uTexture;
-      uniform float uTime;
       uniform float uWarp;
       uniform float uOpacity;
       uniform float uAspect;
@@ -107,11 +105,6 @@ const LiquidAtrium = ({ texture, scrollProgressRef, scrollProgress, viewport }) 
           float scale = textureAspect / uAspect;
           uv.x = (uv.x - 0.5) / scale + 0.5;
         }
-        
-        // LIQUID MOTION: Dynamic 'Silk' flow distortion
-        float silk = sin(uv.y * 5.2 + uTime * 0.38) * 0.009;
-        float ripple = cos(uv.x * 6.5 - uTime * 0.42) * 0.005;
-        uv += (silk + ripple) * (1.0 - uWarp);
         
         vec4 color = texture2D(uTexture, uv);
         
@@ -133,7 +126,6 @@ const LiquidAtrium = ({ texture, scrollProgressRef, scrollProgress, viewport }) 
   useFrame((state, dt) => {
     if (!meshRef.current) return;
     const mat = meshRef.current.material;
-    mat.uniforms.uTime.value = state.clock.getElapsedTime();
     mat.uniforms.uAspect.value = viewport.aspect;
     
     // Fade the hero background out as we leave the top of the page, and bring it back when returning.
@@ -413,7 +405,7 @@ const MainBackgroundCanvas = ({ scrollProgressRef, scrollProgress = 0, hasExperi
   }, [scrollProgressRef]);
 
   return (
-    <div className="fixed inset-0 z-0 pointer-events-none bg-black">
+    <div className="fixed inset-0 -z-10 pointer-events-none bg-black">
       <Canvas
         className="w-full h-full"
         // 120FPS Performance Path: Responsive DPR with frame-rate priority

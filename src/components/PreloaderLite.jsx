@@ -53,11 +53,12 @@ const PreloaderLite = ({ onReady, onExited }) => {
     const onKeyDown = (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
+        e.stopPropagation();
         handleEnter();
       }
     };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    window.addEventListener('keydown', onKeyDown, { capture: true });
+    return () => window.removeEventListener('keydown', onKeyDown, { capture: true });
   }, [handleEnter, isExiting, showEnter]);
 
   return (
@@ -112,21 +113,23 @@ const PreloaderLite = ({ onReady, onExited }) => {
 
           <AnimatePresence>
             {showEnter && !isExiting && (
-              <motion.div
-                className="casa-preloader-hint absolute left-1/2 z-20"
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: reduceMotion ? 0 : 0.25, ease: 'easeOut' }}
-              >
-                <motion.span
-                  className="casa-preloader-hint__text uppercase"
-                  animate={reduceMotion ? undefined : { opacity: [0.55, 1, 0.55], y: [0, -2, 0] }}
-                  transition={reduceMotion ? undefined : { duration: 2.2, ease: 'easeInOut', repeat: Infinity }}
+              <div className="casa-preloader-hint-wrap absolute left-1/2 -translate-x-1/2 z-20">
+                <motion.div
+                  className="casa-preloader-hint"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: reduceMotion ? 0 : 0.25, ease: 'easeOut' }}
                 >
-                  Proceed Now
-                </motion.span>
-              </motion.div>
+                  <motion.span
+                    className="casa-preloader-hint__text uppercase"
+                    animate={reduceMotion ? undefined : { opacity: [0.55, 1, 0.55], y: [0, -2, 0] }}
+                    transition={reduceMotion ? undefined : { duration: 2.2, ease: 'easeInOut', repeat: Infinity }}
+                  >
+                    Proceed Now
+                  </motion.span>
+                </motion.div>
+              </div>
             )}
           </AnimatePresence>
         </motion.div>

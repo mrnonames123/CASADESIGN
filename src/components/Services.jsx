@@ -1,5 +1,5 @@
-import React, { useRef, useState, useEffect } from 'react';
-import { motion, useScroll, useTransform, useSpring, useMotionValue } from 'framer-motion';
+import React, { useRef } from 'react';
+import { motion, useInView, useScroll, useTransform } from 'framer-motion';
 
 const Services = () => {
   const containerRef = useRef(null);
@@ -86,32 +86,7 @@ const Services = () => {
 
 const ServiceCard = ({ s, i }) => {
   const cardRef = useRef(null);
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-
-  const mouseXSpring = useSpring(x);
-  const mouseYSpring = useSpring(y);
-
-  const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["7.5deg", "-7.5deg"]);
-  const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-7.5deg", "7.5deg"]);
-
-  const handleMouseMove = (e) => {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const width = rect.width;
-    const height = rect.height;
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-    const xPct = mouseX / width - 0.5;
-    const yPct = mouseY / height - 0.5;
-    x.set(xPct);
-    y.set(yPct);
-  };
-
-  const handleMouseLeave = () => {
-    x.set(0);
-    y.set(0);
-  };
+  const mediaRevealed = useInView(cardRef, { amount: 0.45, once: true });
 
   return (
     <motion.div
@@ -119,45 +94,31 @@ const ServiceCard = ({ s, i }) => {
       whileInView={{ opacity: 1, y: 0 }}
       transition={{ duration: 1.2, delay: i * 0.15, ease: [0.16, 1, 0.3, 1] }}
       viewport={{ once: true, amount: 0.2 }}
-      className="group relative"
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
+      className="relative"
       ref={cardRef}
-      style={{ perspective: 1200 }}
     >
-      <div className="absolute -top-12 -left-6 text-[10rem] font-display text-white/[0.02] pointer-events-none select-none tracking-tighter group-hover:text-[#A68A64]/10 transition-colors duration-1000 italic font-serif z-0">
+      <div className="absolute -top-12 -left-6 text-[10rem] font-display text-white/[0.02] pointer-events-none select-none tracking-tighter italic font-serif z-0">
         {s.id}
       </div>
 
-      <motion.div 
-        style={{ rotateX, rotateY, transformStyle: 'preserve-3d' }}
-        className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.03] backdrop-blur-2xl p-10 lg:p-14 transition-colors duration-700 hover:border-[#A68A64]/40 hover:bg-white/[0.06] shadow-2xl flex flex-col gap-10 min-h-[460px]"
-      >
+      <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.03] backdrop-blur-2xl p-10 lg:p-14 shadow-2xl flex flex-col gap-10 min-h-[460px]">
         {/* CINEMATIC GLASS MEDIA (ALWAYS VISIBLE BUT MUTED) */}
-        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden translate-z-[-10px]">
+        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
           <img 
             src={s.media} 
             alt="" 
-            className="w-full h-full object-cover opacity-20 grayscale scale-110 blur-[1px] transition-all duration-1000 group-hover:opacity-60 group-hover:grayscale-0 group-hover:scale-105 group-hover:blur-0" 
+            className={[
+              'w-full h-full object-cover transition-all duration-[1400ms] ease-out',
+              mediaRevealed ? 'opacity-60 grayscale-0 scale-105 blur-0' : 'opacity-20 grayscale scale-110 blur-[1px]'
+            ].join(' ')}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-black/40 to-transparent" />
         </div>
 
-        {/* INTERACTIVE SCANNER LENS */}
-        <motion.div
-           className="absolute inset-0 pointer-events-none z-10 mix-blend-soft-light opacity-0 group-hover:opacity-100 transition-opacity duration-700"
-           style={{
-             background: useTransform(
-               [mouseXSpring, mouseYSpring],
-               ([xS, yS]) => `radial-gradient(400px circle at ${(xS + 0.5) * 100}% ${(yS + 0.5) * 100}%, rgba(166,138,100,0.3), transparent 80%)`
-             )
-           }}
-        />
-
-        <div className="relative z-20 flex flex-col h-full translate-z-20">
+        <div className="relative z-20 flex flex-col h-full">
           <div className="flex items-center gap-4 mb-8">
              <span className="text-[10px] font-mono text-[#A68A64] tracking-widest">{s.id}</span>
-             <div className="flex-1 h-[1px] bg-white/10 group-hover:bg-[#A68A64]/30 transition-colors" />
+             <div className="flex-1 h-[1px] bg-white/10" />
           </div>
 
           <h3 className="font-display text-casa-cream text-4xl lg:text-5xl tracking-tight mb-8 italic drop-shadow-2xl">
@@ -167,29 +128,10 @@ const ServiceCard = ({ s, i }) => {
           <p className="font-body text-casa-cream/60 leading-relaxed text-[15px] lg:text-base font-light max-w-sm mb-12 mix-blend-difference">
             {s.body}
           </p>
-
-          <div className="mt-auto flex items-center gap-3 group/btn cursor-pointer">
-            <span className="text-[#A68A64] font-body uppercase tracking-[0.4em] text-[9px] font-bold">View Detail</span>
-            <div className="flex-1 h-[1px] bg-white/10 relative overflow-hidden">
-               <motion.div 
-                 className="absolute inset-0 bg-[#A68A64]/40 translate-x-[-100%]"
-                 whileHover={{ x: '0%' }}
-                 transition={{ duration: 0.5 }}
-               />
-            </div>
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="group-hover/btn:translate-x-1 transition-transform">
-               <path d="M1 11L11 1.00002M11 1.00002H3M11 1.00002V9" stroke="#A68A64" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
         </div>
 
-        <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-bl from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000 z-10" />
-      </motion.div>
-
-      <style dangerouslySetInnerHTML={{ __html: `
-        .translate-z-20 { transform: translateZ(20px); }
-        .translate-z-\[-10px\] { transform: translateZ(-10px); }
-      `}} />
+        <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-bl from-white/5 to-transparent opacity-100 transition-opacity duration-1000 z-10" />
+      </div>
     </motion.div>
   );
 };

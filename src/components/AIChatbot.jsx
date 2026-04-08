@@ -108,14 +108,14 @@ const AIChatbot = ({ hasExperienced = false, activeSection = 'hero-section' }) =
 
       {/* Launcher */}
       {!isOpen && (
-        <div className="fixed right-8 bottom-8 z-[9001] flex flex-col items-end gap-4 pointer-events-none">
+        <div className="casa-ai-launcher fixed left-4 bottom-4 sm:left-auto sm:right-8 sm:bottom-8 z-[9001] flex flex-col items-end gap-4 pointer-events-none">
           <AnimatePresence>
             {showGreeting && (
               <motion.div
                 initial={{ opacity: 0, y: 20, scale: 0.8 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 10, scale: 0.9 }}
-                className="glass-pill-premium px-6 py-4 rounded-[30px] border border-[#A68A64]/30 pointer-events-auto shadow-2xl relative"
+                className="hidden sm:block glass-pill-premium px-6 py-4 rounded-[30px] border border-[#A68A64]/30 pointer-events-auto shadow-2xl relative"
               >
                 <p className="text-[11px] font-mono text-[#A68A64] uppercase tracking-[0.28em] whitespace-nowrap mb-1 drop-shadow-[0_10px_22px_rgba(0,0,0,0.9)]">CASA Concierge</p>
                 <p className="text-[14px] font-display italic text-white whitespace-nowrap drop-shadow-[0_14px_30px_rgba(0,0,0,0.9)]">How may I assist your design journey?</p>
@@ -132,7 +132,7 @@ const AIChatbot = ({ hasExperienced = false, activeSection = 'hero-section' }) =
             whileTap={{ scale: 0.95 }}
             type="button"
             onClick={handleOpen}
-            className="pointer-events-auto group flex items-center gap-4 rounded-full border border-[#A68A64]/20 bg-black/60 backdrop-blur-2xl px-6 py-3.5 shadow-[0_25px_80px_rgba(0,0,0,0.85)] hover:border-[#A68A64]/40 transition-all relative overflow-hidden"
+            className="pointer-events-auto group flex items-center gap-3 sm:gap-4 rounded-full border border-[#A68A64]/20 bg-black/60 backdrop-blur-2xl p-3.5 sm:px-6 sm:py-3.5 shadow-[0_25px_80px_rgba(0,0,0,0.85)] hover:border-[#A68A64]/40 transition-all relative overflow-hidden"
             aria-label="Open CASA AI"
           >
             <div className="flex animate-pulse items-center justify-center p-1.5 bg-[#A68A64]/10 rounded-full">
@@ -145,7 +145,7 @@ const AIChatbot = ({ hasExperienced = false, activeSection = 'hero-section' }) =
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
-            <span className="font-body text-[11px] uppercase tracking-[0.42em] text-white/80 group-hover:text-white transition-colors drop-shadow-[0_10px_22px_rgba(0,0,0,0.9)]">
+            <span className="hidden sm:inline font-body text-[11px] uppercase tracking-[0.42em] text-white/80 group-hover:text-white transition-colors drop-shadow-[0_10px_22px_rgba(0,0,0,0.9)]">
               CASA AI
             </span>
             {/* Ambient Pulse Ring */}
@@ -157,7 +157,7 @@ const AIChatbot = ({ hasExperienced = false, activeSection = 'hero-section' }) =
       {/* Panel */}
       <AnimatePresence>
         {isOpen && (
-          <div className="fixed right-8 bottom-24 z-[9001] pointer-events-auto">
+          <div className="casa-ai-panel fixed left-4 bottom-20 sm:left-auto sm:right-8 sm:bottom-24 z-[9001] pointer-events-auto">
             <PdfChatbotPanel onClose={() => setIsOpen(false)} />
           </div>
         )}
