@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import PdfChatbotPanel from './chatbot/PdfChatbotPanel';
 
@@ -31,6 +31,7 @@ const AIChatbot = ({ hasExperienced = false, activeSection = 'hero-section' }) =
   const [isOpen, setIsOpen] = useState(false);
   const [showGreeting, setShowGreeting] = useState(false);
   const isHeroSection = activeSection === 'hero-section';
+  const didShowGreetingOnceRef = useRef(false);
 
   useEffect(() => {
     // Proactively wake the backend early (before the user's first question).
@@ -53,16 +54,27 @@ const AIChatbot = ({ hasExperienced = false, activeSection = 'hero-section' }) =
   }, []);
 
   useEffect(() => {
-    if (hasExperienced && isHeroSection && !isOpen) {
-      const timer = setTimeout(() => setShowGreeting(true), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [hasExperienced, isHeroSection, isOpen]);
+    if (!isHeroSection || isOpen || didShowGreetingOnceRef.current) return;
+
+    const timer = setTimeout(() => {
+      setShowGreeting(true);
+      didShowGreetingOnceRef.current = true;
+    }, 2600);
+
+    return () => clearTimeout(timer);
+  }, [isHeroSection, isOpen]);
 
   useEffect(() => {
     if (isHeroSection) return;
     setShowGreeting(false);
   }, [isHeroSection]);
+
+  useEffect(() => {
+    if (!showGreeting) return;
+    // Don't keep the greeting pinned forever; it should feel like a hint, not UI clutter.
+    const timer = setTimeout(() => setShowGreeting(false), 6500);
+    return () => clearTimeout(timer);
+  }, [showGreeting]);
 
   useEffect(() => {
     const onKeyDown = (e) => {
