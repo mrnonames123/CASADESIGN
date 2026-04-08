@@ -444,7 +444,7 @@ function AppScene() {
           </div>
 
           {/* TOTAL SCROLL WEIGHT FOR THE RED CARPET SEQUENCE */}
-          <div id="gate-scroll-track" className="h-[1100vh]" />
+          <div id="gate-scroll-track" className="h-[600vh]" />
         </div>
 
         {/* ACT II/III: THE CRAFT (Archive detail) */}
