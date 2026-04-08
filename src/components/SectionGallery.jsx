@@ -33,11 +33,11 @@ const SectionGallery = () => {
       className="horizontal-slide w-[100vw] h-screen shrink-0 bg-[#0a0a0a] flex items-center justify-center pointer-events-none opacity-100 visible z-[10]"
       style={{ opacity: 1, visibility: 'visible', display: 'block', position: 'relative', minHeight: '100vh' }}
     >
-      <div className="slide-content w-full h-full relative px-6 md:px-16 py-16 flex flex-col justify-center max-w-[90rem] mx-auto pointer-events-auto">
+      <div className="slide-content w-full h-full relative px-6 md:px-16 py-16 pt-32 md:pt-16 flex flex-col justify-center max-w-[90rem] mx-auto pointer-events-auto">
 
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 border-b border-casa-cream/10 pb-6 w-full pointer-events-none z-20">
-          <h2 ref={headerRef} className="text-5xl md:text-7xl font-display text-casa-cream tracking-tight leading-none italic">Archival Series</h2>
-          <p className="font-body text-casa-bronze tracking-[0.4em] uppercase text-xs mt-6 md:mt-0 font-semibold md:pb-2 opacity-100">
+          <h2 ref={headerRef} className="text-4xl md:text-7xl font-display text-casa-cream tracking-tight leading-none italic">Archival Series</h2>
+          <p className="font-body text-casa-bronze tracking-[0.4em] uppercase text-[9px] md:text-xs mt-6 md:mt-0 font-semibold md:pb-2 opacity-100">
             Restricted Case Studies
           </p>
         </div>
@@ -67,8 +67,6 @@ const SectionGallery = () => {
             </div>
           ))}
         </div>
-
-        <SeeMoreButton onClick={() => transitionToSection(3, 4)} text="Proceed" />
 
       </div>
     </section>
