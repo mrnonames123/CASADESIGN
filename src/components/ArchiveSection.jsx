@@ -21,7 +21,7 @@ const ArchiveSection = () => {
     <section 
       ref={sectionRef}
       id="archive-section"
-      className="relative w-full min-h-[165vh] bg-[#080808] flex items-start md:items-center justify-center overflow-hidden pt-48 pb-32 md:py-32 px-10 md:px-24 perspective-1000"
+      className="relative w-full min-h-screen bg-[#080808] flex items-center justify-center overflow-hidden pt-64 pb-32 md:py-32 px-10 md:px-24 perspective-1000"
     >
       {/* 1. PARALLAX TECH GRID */}
       <motion.div 
@@ -62,7 +62,7 @@ const ArchiveSection = () => {
             initial={{ opacity: 0, x: -50 }}
             whileInView={{ opacity: 1, x: 0 }}
             transition={{ duration: 1.6, ease: [0.16, 1, 0.3, 1] }}
-            viewport={{ once: true, amount: 0.5 }}
+            viewport={{ once: true, amount: 0.2 }}
           >
             <div className="flex items-center gap-3 mb-6 group cursor-default">
             </div>
@@ -72,7 +72,7 @@ const ArchiveSection = () => {
               <span className="italic text-[#A68A64] font-serif pr-2 opacity-80 group-hover:opacity-100 transition-opacity">Evolution</span>
             </h2>
 
-            <div className="mt-14 max-w-sm space-y-12 relative">
+            <div className="mt-10 md:mt-14 max-w-sm space-y-12 relative">
                <div className="absolute -left-6 top-0 bottom-0 w-[1px] bg-[#A68A64]/10 shadow-[0_0_10px_rgba(166,138,100,0.1)]" />
               
                <div className="space-y-6">
@@ -84,10 +84,10 @@ const ArchiveSection = () => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-10 pt-4">
+              <div className="flex items-center gap-10 pt-4 mt-6 md:mt-0">
                  {[ { val: '1.04', label: 'Phi' }, { val: '0.00μ', label: 'Distort' } ].map((stat, i) => (
                    <div key={i} className="group cursor-crosshair">
-                      <div className="text-[#FAF9F6] font-display text-3xl mb-1 group-hover:translate-y-[-2px] transition-transform duration-300">{stat.val}</div>
+                      <div className="text-[#FAF9F6] font-display text-2xl md:text-3xl mb-1 group-hover:translate-y-[-2px] transition-transform duration-300">{stat.val}</div>
                       <div className="text-[8px] uppercase tracking-[0.3em] text-[#A68A64]/70 font-mono transition-colors">{stat.label}</div>
                    </div>
                  ))}

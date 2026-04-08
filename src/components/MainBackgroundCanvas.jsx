@@ -283,7 +283,9 @@ function HybridScene({ scrollProgressRef, scrollProgress, hasExperienced, heroTi
     camera.position.y = THREE.MathUtils.damp(camera.position.y, targetCamY, 7.5, dt);
 
     if (groupRef.current) {
-      const isVisibleNow = !chairPastEnd && (scrollProgressValue < 0.95 || inGate);
+      // Visibility: Only visible during intro OR while inside the narrative gate.
+      // We hide it strictly once the gate is passed or before it starts.
+      const isVisibleNow = !chairPastEnd && (inGate || scrollProgressValue < 0.1);
       groupRef.current.visible = isVisibleNow;
       if (!isVisibleNow) return;
 
