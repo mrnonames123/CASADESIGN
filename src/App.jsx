@@ -39,6 +39,8 @@ function AppScene() {
   const [hasExperienced, setHasExperienced] = useState(false);
   const [heroTitleShown, setHeroTitleShown] = useState(false);
   const [isGateActive, setIsGateActive] = useState(false);
+  const [introHint, setIntroHint] = useState(null);
+  const introHintTimeoutRef = useRef(0);
   // Keep a ref for high-frequency scroll updates so the 3D canvas doesn't re-render on every scroll tick.
   const scrollProgressRef = useRef(0);
   // UI can use a state snapshot (updated at most once per rAF).
@@ -58,6 +60,20 @@ function AppScene() {
   useEffect(() => {
     hasExperiencedRef.current = hasExperienced;
   }, [hasExperienced]);
+
+  const flashIntroHint = (message) => {
+    if (typeof window === 'undefined') return;
+    if (introHintTimeoutRef.current) {
+      window.clearTimeout(introHintTimeoutRef.current);
+      introHintTimeoutRef.current = 0;
+    }
+
+    setIntroHint(message);
+    introHintTimeoutRef.current = window.setTimeout(() => {
+      setIntroHint(null);
+      introHintTimeoutRef.current = 0;
+    }, 2600);
+  };
 
   useEffect(() => {
     if (!hasExperienced) setHeroTitleShown(false);
@@ -123,12 +139,16 @@ function AppScene() {
 
       // If users scroll on mobile/desktop, treat it as the "experience" intent and keep scrolling natural.
       if (!hasExperiencedRef.current && e.scroll > 40) {
+        hasExperiencedRef.current = true;
         setHasExperienced(true);
+        flashIntroHint('Experience unlocked — scroll to explore.');
       }
 
       // Reset when scrolling back to the very top
       if (e.scroll < 10 && hasExperiencedRef.current) {
+        hasExperiencedRef.current = false;
         setHasExperienced(false);
+        flashIntroHint('Intro mode — tap “Explore Archive” to begin.');
       }
     });
     
@@ -140,6 +160,10 @@ function AppScene() {
       if (scrollRafRef.current) {
         window.cancelAnimationFrame(scrollRafRef.current);
         scrollRafRef.current = 0;
+      }
+      if (introHintTimeoutRef.current) {
+        window.clearTimeout(introHintTimeoutRef.current);
+        introHintTimeoutRef.current = 0;
       }
       lenis.destroy();
     };
@@ -252,6 +276,18 @@ function AppScene() {
       ref={containerRef}
       className={`min-h-screen bg-transparent text-[#FAF9F6] font-[Inter,sans-serif] font-light selection:bg-[#A68A64] selection:text-black relative`}
     >
+      <motion.div
+        className="fixed left-1/2 bottom-24 -translate-x-1/2 z-[10050] pointer-events-none px-4 w-full flex justify-center"
+        initial={false}
+        animate={introHint ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 8, scale: 0.98 }}
+        transition={{ duration: 0.35, ease: [0.22, 0.9, 0.24, 1] }}
+      >
+        <div className="glass-pill-premium px-5 py-3 rounded-full border border-white/10 bg-black/50 text-white/85 shadow-[0_18px_60px_rgba(0,0,0,0.75)]">
+          <span className="font-body text-[10px] md:text-[11px] uppercase tracking-[0.38em]">
+            {introHint || ' '}
+          </span>
+        </div>
+      </motion.div>
       <div className="casa-grain"></div>
       
       {/* GLOBAL 3D CANVAS (Shared Camera & Lights) */}
