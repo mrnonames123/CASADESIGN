@@ -143,13 +143,6 @@ function AppScene() {
         setHasExperienced(true);
         flashIntroHint('Experience unlocked — scroll to explore.');
       }
-
-      // Reset when scrolling back to the very top
-      if (e.scroll < 10 && hasExperiencedRef.current) {
-        hasExperiencedRef.current = false;
-        setHasExperienced(false);
-        flashIntroHint('Intro mode — tap “Explore Archive” to begin.');
-      }
     });
     
     gsap.ticker.add((time) => {
