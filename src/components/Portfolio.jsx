@@ -1,7 +1,9 @@
-import React, { useRef } from 'react';
+import React, { useCallback, useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
+import { useNavigation } from '../context/NavigationContext';
 
 const ArchivalSeries = () => {
+  const { lenisRef } = useNavigation();
   const sectionRef = useRef(null);
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -9,6 +11,15 @@ const ArchivalSeries = () => {
   });
 
   const bgY = useTransform(scrollYProgress, [0, 1], ["0%", "25%"]);
+
+  const scrollToContact = useCallback(() => {
+    const target = '#contact-section';
+    if (lenisRef?.scrollTo) {
+      lenisRef.scrollTo(target, { duration: 1.6 });
+      return;
+    }
+    document.querySelector(target)?.scrollIntoView({ behavior: 'smooth' });
+  }, [lenisRef]);
 
   return (
     <section 
@@ -132,11 +143,11 @@ const ArchivalSeries = () => {
                   <div className="w-8 h-[1px] bg-[#A68A64]/30 group-hover:w-12 group-hover:bg-white transition-all" />
                   Request Full Portfolio
                 </a>
-                <button 
-                  onClick={() => scrollTo('contact-section')}
+                 <button 
+                  onClick={scrollToContact}
                   className="font-body text-white text-[10px] uppercase tracking-[0.6em] group flex items-center gap-3 hover:gap-6 transition-all bg-[#A68A64] px-10 py-4 rounded-full text-black font-bold border-none"
-                >
-                   Inquire 
+                 >
+                    Inquire 
                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                       <path d="M1 13L13 1M13 1H3M13 1V11" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                    </svg>

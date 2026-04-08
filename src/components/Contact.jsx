@@ -1,11 +1,67 @@
-import React, { useRef, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Contact = () => {
   const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState({ name: '', email: '', project: '' });
+  const [formData, setFormData] = useState({ name: '', email: '', project: '', website: '' });
+  const [status, setStatus] = useState('idle'); // idle | sending | error | success | config
+  const [errorMessage, setErrorMessage] = useState('');
 
   const nextStep = () => setStep(s => Math.min(s + 1, 3));
+  const prevStep = () => setStep(s => Math.max(s - 1, 1));
+
+  const canAdvance = useMemo(() => {
+    if (status === 'sending') return false;
+    if (step === 1) return formData.name.trim().length >= 2 && /\S+@\S+\.\S+/.test(formData.email.trim());
+    if (step === 2) return formData.project.trim().length >= 10;
+    return false;
+  }, [formData.email, formData.name, formData.project, status, step]);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async () => {
+    if (!canAdvance) {
+       setErrorMessage('Please fill all fields (message should be at least 10 characters).');
+       return;
+    }
+
+    setStatus('sending');
+    setErrorMessage('');
+
+    try {
+      const response = await fetch('/api/inquiry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          message: formData.project.trim(),
+          website: formData.website || ''
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        if (response.status === 501) {
+          setStatus('config');
+          setStep(3);
+          return;
+        }
+        throw new Error(errorData?.error || `Transmission failed (${response.status}).`);
+      }
+
+      setStatus('success');
+      setStep(3); // Move to success step
+      setFormData({ name: '', email: '', project: '', website: '' });
+    } catch (err) {
+      console.error('Contact error:', err);
+      setStatus('error');
+      setErrorMessage(err.message || 'The studio server is currently unreachable.');
+    }
+  };
 
   return (
     <section 
@@ -78,21 +134,44 @@ const Contact = () => {
                       <span className="text-4xl font-display italic text-[#A68A64]">01</span>
                       <span className="text-[10px] font-mono text-white/40 uppercase tracking-widest">Basics</span>
                    </div>
-                   <input 
-                     type="text" 
-                     placeholder="Your Identity // Name"
-                     className="w-full bg-transparent border-b border-white/10 py-4 font-body text-white focus:border-[#A68A64] transition-colors outline-none"
-                   />
-                   <input 
-                     type="email" 
-                     placeholder="Transmission Path // Email"
-                     className="w-full bg-transparent border-b border-white/10 py-4 font-body text-white focus:border-[#A68A64] transition-colors outline-none"
-                   />
+                   <div className="flex flex-col gap-2">
+                     {/* Honeypot (hidden) */}
+                     <input
+                       type="text"
+                       name="website"
+                       tabIndex={-1}
+                       autoComplete="off"
+                       value={formData.website}
+                       onChange={handleInputChange}
+                       className="hidden"
+                     />
+                     <input 
+                       type="text" 
+                       name="name"
+                       value={formData.name}
+                       onChange={handleInputChange}
+                       placeholder="Full Name"
+                       className="w-full bg-transparent border-b border-white/10 py-4 font-body text-white focus:border-[#A68A64] transition-colors outline-none"
+                     />
+                     <input 
+                       type="email" 
+                       name="email"
+                       value={formData.email}
+                       onChange={handleInputChange}
+                       placeholder="Email Address"
+                       className="w-full bg-transparent border-b border-white/10 py-4 font-body text-white focus:border-[#A68A64] transition-colors outline-none"
+                     />
+                   </div>
                    <button 
-                     onClick={nextStep}
-                     className="mt-4 w-full py-5 rounded-full border border-[#A68A64]/30 bg-[#A68A64]/10 text-white font-body text-[10px] uppercase tracking-[0.5em] hover:bg-[#A68A64]/30 transition-all group overflow-hidden relative"
+                     type="button"
+                     onClick={() => {
+                       if (!canAdvance) return;
+                       nextStep();
+                     }}
+                     disabled={!canAdvance}
+                     className="mt-4 w-full py-5 rounded-full border border-[#A68A64]/30 bg-[#A68A64]/10 text-white font-body text-[10px] uppercase tracking-[0.5em] hover:bg-[#A68A64]/30 transition-all group overflow-hidden relative disabled:opacity-50 disabled:cursor-not-allowed"
                    >
-                      <span className="relative z-10 transition-transform group-hover:tracking-[0.8em]">Advance Sequence</span>
+                      <span className="relative z-10 transition-transform group-hover:tracking-[0.8em]">Next Step</span>
                       <motion.div className="absolute inset-0 bg-[#A68A64]/20 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-700" />
                    </button>
                 </motion.div>
@@ -111,16 +190,40 @@ const Contact = () => {
                       <span className="text-[10px] font-mono text-white/40 uppercase tracking-widest">Scope</span>
                    </div>
                    <textarea 
-                     placeholder="Mission Constraints // Requirements"
+                     name="project"
+                     value={formData.project}
+                     onChange={handleInputChange}
+                     placeholder="Project Brief & Requirements"
                      rows="4"
                      className="w-full bg-transparent border-b border-white/10 py-4 font-body text-white focus:border-[#A68A64] transition-colors outline-none resize-none"
                    />
-                   <button 
-                     onClick={nextStep}
-                     className="mt-4 w-full py-5 rounded-full border border-[#A68A64]/30 bg-[#A68A64]/10 text-white font-body text-[10px] uppercase tracking-[0.5em] hover:bg-[#A68A64]/30 transition-all group overflow-hidden relative"
-                   >
-                      <span className="relative z-10 transition-transform group-hover:tracking-[0.8em]">Finalize Metadata</span>
-                   </button>
+
+                   {errorMessage && (
+                     <p className="text-red-400 text-[9px] uppercase tracking-widest text-center">{errorMessage}</p>
+                   )}
+
+                   <div className="flex flex-col sm:flex-row gap-4">
+                     <button
+                       type="button"
+                       onClick={prevStep}
+                       disabled={status === 'sending'}
+                       className="w-full py-5 rounded-full border border-white/10 bg-white/[0.03] text-white/70 font-body text-[10px] uppercase tracking-[0.5em] hover:bg-white/[0.06] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                     >
+                       Back
+                     </button>
+
+                     <button 
+                       type="button"
+                       onClick={handleSubmit}
+                       disabled={!canAdvance}
+                       className="w-full py-5 rounded-full border border-[#A68A64]/30 bg-[#A68A64]/10 text-white font-body text-[10px] uppercase tracking-[0.5em] hover:bg-[#A68A64]/30 transition-all group overflow-hidden relative disabled:opacity-50 disabled:cursor-not-allowed"
+                     >
+                        <span className="relative z-10 transition-transform group-hover:tracking-[0.8em]">
+                          {status === 'sending' ? 'Sending…' : 'Send Inquiry'}
+                        </span>
+                        <motion.div className="absolute inset-0 bg-[#A68A64]/20 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-700" />
+                     </button>
+                   </div>
                 </motion.div>
               )}
 
@@ -139,10 +242,43 @@ const Contact = () => {
                          className="w-10 h-10 bg-[#A68A64] rounded-full"
                       />
                    </div>
-                   <h3 className="font-display text-3xl text-white italic">Transmission Successful</h3>
-                   <p className="text-white/40 font-body text-[10px] uppercase tracking-[0.4em] leading-loose">
-                      The archive has received your parameters. <br /> Our studio will decrypt and respond within 24 standard cycles.
-                   </p>
+                   {status === 'success' && (
+                     <>
+                       <h3 className="font-display text-3xl text-white italic">Message Sent</h3>
+                       <p className="text-white/40 font-body text-[10px] uppercase tracking-[0.4em] leading-loose">
+                         Your inquiry has been received. <br /> We will review the details and reach out within 24 hours.
+                       </p>
+                     </>
+                   )}
+
+                   {status === 'config' && (
+                     <>
+                       <h3 className="font-display text-3xl text-white italic">Almost Ready</h3>
+                       <p className="text-white/40 font-body text-[10px] uppercase tracking-[0.4em] leading-loose">
+                         Email delivery isn’t configured yet. Please email us at <a className="text-white underline underline-offset-4" href="mailto:studio@casadesign.ai">studio@casadesign.ai</a>.
+                       </p>
+                     </>
+                   )}
+
+                   {status === 'error' && (
+                     <>
+                       <h3 className="font-display text-3xl text-white italic">Transmission Failed</h3>
+                       <p className="text-white/40 font-body text-[10px] uppercase tracking-[0.4em] leading-loose">
+                         {errorMessage || 'Please try again.'}
+                       </p>
+                       <button
+                         type="button"
+                         onClick={() => {
+                           setStatus('idle');
+                           setErrorMessage('');
+                           setStep(1);
+                         }}
+                         className="mt-2 px-8 py-4 rounded-full border border-[#A68A64]/35 bg-[#A68A64]/10 text-white font-body text-[10px] uppercase tracking-[0.5em] hover:bg-[#A68A64]/25 transition-colors"
+                       >
+                         Try again
+                       </button>
+                     </>
+                   )}
                 </motion.div>
               )}
             </AnimatePresence>

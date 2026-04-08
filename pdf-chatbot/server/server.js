@@ -197,6 +197,31 @@ ${question}
   }
 })
 
+// --- CONTACT FORM HANDLER ---
+app.post("/inquiry", async (req, res) => {
+  try {
+    const { name, email } = req.body
+    const project = req.body?.project ?? req.body?.message
+
+    if (!name || !email || !project) {
+      return res.status(400).json({ error: "Name, email, and project brief are required." })
+    }
+
+    console.log("📨 NEW CONTACT INQUIRY:")
+    console.log("FROM:", name, `(${email})`)
+    console.log("PROJECT:", project)
+    console.log("-----------------------")
+
+    // TODO: Integrate with Nodemailer or SendGrid here
+    // For now, we simulate a successful database/email "transmission"
+    
+    res.json({ ok: true, message: "Inquiry received successfully." })
+  } catch (error) {
+    console.error("🔥 CONTACT ERROR:", error)
+    res.status(500).json({ error: "Failed to process inquiry." })
+  }
+})
+
 const PORT = Number(process.env.PORT) || 5000
 
 app.listen(PORT, () => {

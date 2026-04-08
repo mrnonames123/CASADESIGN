@@ -13,6 +13,11 @@ export default defineConfig({
       '/health': {
         target: 'http://localhost:5000',
         changeOrigin: true
+      },
+      '/api/inquiry': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/inquiry/, '/inquiry')
       }
     }
   }
