@@ -124,9 +124,9 @@ const ArchivalSeries = () => {
              initial={{ opacity: 0, y: 40 }}
              whileInView={{ opacity: 1, y: 0 }}
              transition={{ duration: 1.2, delay: 0.4 }}
-             className="lg:col-span-5 grid grid-cols-2 gap-8"
+             className="lg:col-span-5 grid grid-cols-1 md:grid-cols-2 gap-8"
           >
-             <div className="relative overflow-hidden rounded-[30px] border border-white/5 h-[350px]">
+             <div className="relative overflow-hidden rounded-[30px] border border-white/5 h-[450px] md:h-[350px]">
                 <AutoColorImage
                   src="/portfolio-3.png"
                   className="w-full h-full object-cover transition-all duration-[1200ms] ease-out"
@@ -136,7 +136,7 @@ const ArchivalSeries = () => {
                 />
                 <div className="absolute inset-0 bg-[#A68A64]/10 opacity-0 pointer-events-none" />
              </div>
-             <div className="relative overflow-hidden rounded-[30px] border border-white/5 h-[350px]">
+             <div className="relative overflow-hidden rounded-[30px] border border-white/5 h-[450px] md:h-[350px]">
                 <AutoColorImage
                   src="/portfolio-4.png"
                   className="w-full h-full object-cover transition-all duration-[1200ms] ease-out"
@@ -161,14 +161,14 @@ const ArchivalSeries = () => {
                 </div>
              </div>
              
-             <div className="flex items-center gap-4">
-                <a href="mailto:portfolio@casadesign.ai" className="font-body text-[#A68A64] text-[10px] uppercase tracking-[0.6em] hover:text-white transition-colors flex items-center gap-4 group">
-                  <div className="w-8 h-[1px] bg-[#A68A64]/30 group-hover:w-12 group-hover:bg-white transition-all" />
+             <div className="flex flex-col md:flex-row items-center gap-10 md:gap-14 w-full md:w-auto">
+                <a href="mailto:portfolio@casadesign.ai" className="font-body text-[#A68A64] text-[10px] uppercase tracking-[0.5em] hover:text-white transition-colors flex items-center gap-4 group">
+                  <div className="hidden md:block w-8 h-[1px] bg-[#A68A64]/30 group-hover:w-12 group-hover:bg-white transition-all" />
                   Request Full Portfolio
                 </a>
                  <button 
                   onClick={scrollToContact}
-                  className="font-body text-white text-[10px] uppercase tracking-[0.6em] group flex items-center gap-3 hover:gap-6 transition-all bg-[#A68A64] px-10 py-4 rounded-full text-black font-bold border-none"
+                  className="font-body text-white text-[10px] uppercase tracking-[0.6em] group flex items-center gap-3 hover:gap-6 transition-all bg-[#A68A64] px-10 py-4 md:py-5 rounded-full text-black font-bold border-none w-full md:w-auto justify-center"
                  >
                     Inquire 
                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
