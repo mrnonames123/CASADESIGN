@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, useMotionValue, useSpring } from 'framer-motion';
 import { useNavigation } from '../context/NavigationContext';
 
-const Hero = ({ animateIn = false, onExperience, hasExperienced, onTitleShown }) => {
+const Hero = ({ animateIn = false, onExperience, hasExperienced, onTitleShown, onHint }) => {
   const { lenisRef } = useNavigation();
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [showTitle, setShowTitle] = useState(false);
@@ -55,6 +55,7 @@ const Hero = ({ animateIn = false, onExperience, hasExperienced, onTitleShown })
   const handleExperience = useCallback(() => {
     if (isTransitioning) return;
     setIsTransitioning(true);
+    onHint?.('Scrolling…');
     onExperience?.();
     const target = '#mission-vision-wrapper';
     setTimeout(() => {

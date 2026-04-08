@@ -342,6 +342,7 @@ function AppScene() {
             onExperience={handleExperience}
             hasExperienced={hasExperienced}
             onTitleShown={() => setHeroTitleShown(true)}
+            onHint={flashIntroHint}
           />
         </div>
 
