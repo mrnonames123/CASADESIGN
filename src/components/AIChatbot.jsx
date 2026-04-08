@@ -108,7 +108,7 @@ const AIChatbot = ({ hasExperienced = false, activeSection = 'hero-section' }) =
 
       {/* Launcher */}
       {!isOpen && (
-        <div className="casa-ai-launcher fixed left-4 bottom-4 sm:left-auto sm:right-8 sm:bottom-8 z-[9001] flex flex-col items-end gap-4 pointer-events-none">
+        <div className="casa-ai-launcher fixed right-4 bottom-4 md:right-8 md:bottom-8 z-[9001] flex flex-col items-end gap-4 pointer-events-none">
           <AnimatePresence>
             {showGreeting && (
               <motion.div
@@ -158,7 +158,7 @@ const AIChatbot = ({ hasExperienced = false, activeSection = 'hero-section' }) =
       {/* Panel */}
       <AnimatePresence>
         {isOpen && (
-          <div className="casa-ai-panel fixed left-4 bottom-20 sm:left-auto sm:right-8 sm:bottom-24 z-[9001] pointer-events-auto">
+          <div className="casa-ai-panel fixed right-4 bottom-20 md:right-8 md:bottom-24 z-[9001] pointer-events-auto">
             <PdfChatbotPanel onClose={() => setIsOpen(false)} />
           </div>
         )}

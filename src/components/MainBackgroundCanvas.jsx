@@ -21,9 +21,9 @@ const enhanceMaterials = (root) => {
     materials.forEach((mat) => {
       if (!mat) return;
       if (mat.isMeshStandardMaterial) {
-        mat.metalness = 0.45;
-        mat.roughness = 0.5;
-        mat.envMapIntensity = Math.max(1.5, mat.envMapIntensity ?? 1);
+        mat.metalness = 0.65;
+        mat.roughness = 0.28;
+        mat.envMapIntensity = Math.max(2.8, mat.envMapIntensity ?? 1);
         mat.needsUpdate = true;
       }
     });
@@ -339,7 +339,7 @@ function HybridScene({ scrollProgressRef, scrollProgress, hasExperienced, heroTi
     }
 
     if (envRef.current) {
-      const targetInt = THREE.MathUtils.lerp(0.35, 3.0, localCulm);
+      const targetInt = THREE.MathUtils.lerp(1.25, 4.0, localCulm);
       if (Math.abs(envRef.current.environmentIntensity - targetInt) > 0.01) {
         envRef.current.environmentIntensity = targetInt;
       }
@@ -409,14 +409,14 @@ const MainBackgroundCanvas = ({ scrollProgressRef, scrollProgress = 0, hasExperi
       <Canvas
         className="w-full h-full"
         // 120FPS Performance Path: Responsive DPR with frame-rate priority
-        dpr={[1, 1.5]} 
+        dpr={[1, 2]} 
         gl={{ 
-          antialias: false,
+          antialias: true,
           alpha: true, 
           powerPreference: 'high-performance',
           stencil: false,
           depth: true,
-          precision: 'lowp', // Maximizes fragment shader throughput for 120fps
+          precision: 'mediump', // Improved from lowp for mobile clarity
           preserveDrawingBuffer: false
         }}
         camera={{ position: [0, 0, 5.2], fov: 32 }}

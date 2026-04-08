@@ -387,7 +387,7 @@ function AppScene() {
                   </p>
                  <div className="relative flex flex-col items-end">
                    <motion.h2 
-                     className="mission-title font-display italic text-[clamp(2.8rem,9vw,6.8vw)] text-white leading-[0.9] max-w-2xl tracking-[-0.03em] drop-shadow-[0_25px_60px_rgba(0,0,0,0.8)]"
+                     className="mission-title font-display italic text-[clamp(2.5rem,8vw,5.5vw)] text-white leading-[0.9] max-w-2xl tracking-[-0.03em] drop-shadow-[0_25px_60px_rgba(0,0,0,0.8)]"
                    >
                      Turning Ideas <br/><span className="not-italic text-[#A68A64]">Into Reality.</span>
                    </motion.h2>
@@ -402,14 +402,14 @@ function AppScene() {
             </div>
 
             {/* STAGE 3: THE CULMINATION (ABOUT & STATS) */}
-            <div className="culmination-gate absolute inset-0 z-10 flex flex-col items-center justify-center text-center px-6 md:px-12">
+            <div className="culmination-gate absolute inset-0 z-10 flex flex-col items-center justify-center text-center px-6 md:px-12 pt-32 md:pt-20">
                <div className="max-w-6xl w-full">
-                 <div className="flex flex-col items-center mb-12">
-                   <span className="text-[11px] md:text-sm uppercase tracking-[0.8em] text-[#A68A64] font-bold mb-6 flex items-center gap-6">
-                     <span className="w-12 h-[1px] bg-[#A68A64]/40" /> THE DIGITAL ARTISAN <span className="w-12 h-[1px] bg-[#A68A64]/40" />
+                 <div className="flex flex-col items-center mb-10 md:mb-12">
+                   <span className="text-[9px] md:text-sm uppercase tracking-[0.2em] md:tracking-[0.4em] text-[#A68A64] font-bold mb-4 md:mb-6 flex items-center justify-center gap-3 md:gap-6 w-full">
+                     <span className="w-8 md:w-12 h-[1px] bg-[#A68A64]/40" /> THE DIGITAL ARTISAN <span className="w-8 md:w-12 h-[1px] bg-[#A68A64]/40" />
                    </span>
                    <h2
-                     className="font-display text-[clamp(2.4rem,12vw,7.5vw)] leading-[0.85] text-white italic drop-shadow-[0_30px_90px_rgba(0,0,0,0.9)]"
+                     className="font-display text-[clamp(2.1rem,10vw,7.5vw)] leading-[0.85] text-white italic drop-shadow-[0_30px_90px_rgba(0,0,0,0.9)]"
                    >
                      About <span className="not-italic text-[#A68A64]">CASA</span>
                    </h2>
