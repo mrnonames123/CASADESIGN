@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion, useMotionValue, useSpring } from 'framer-motion';
 import { useNavigation } from '../context/NavigationContext';
 
@@ -35,6 +35,25 @@ const Hero = ({ animateIn = false, onExperience, hasExperienced, onTitleShown })
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, [mouseX, mouseY]);
 
+  function handleExperience() {
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    onExperience?.();
+    const target = '#mission-vision-wrapper';
+    setTimeout(() => {
+      if (lenisRef?.scrollTo) {
+        lenisRef.scrollTo(target, { 
+          duration: 3.2, 
+          easing: (t) => t === 1 ? 1 : 1 - Math.pow(2, -10 * t),
+          lock: true,
+          force: true
+        });
+        return;
+      }
+      document.querySelector(target)?.scrollIntoView({ behavior: 'smooth' });
+    }, 600);
+  }
+
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
 
@@ -60,7 +79,7 @@ const Hero = ({ animateIn = false, onExperience, hasExperienced, onTitleShown })
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [handleExperience]);
+  }, [isTransitioning, lenisRef, onExperience]);
 
   useEffect(() => {
     if (animateIn && !hasExperienced) {
@@ -88,24 +107,7 @@ const Hero = ({ animateIn = false, onExperience, hasExperienced, onTitleShown })
     }
   }, [hasExperienced]);
 
-  const handleExperience = useCallback(() => {
-    if (isTransitioning) return;
-    setIsTransitioning(true);
-    onExperience?.();
-    const target = '#mission-vision-wrapper';
-    setTimeout(() => {
-      if (lenisRef?.scrollTo) {
-        lenisRef.scrollTo(target, { 
-          duration: 3.2, 
-          easing: (t) => t === 1 ? 1 : 1 - Math.pow(2, -10 * t),
-          lock: true,
-          force: true
-        });
-        return;
-      }
-      document.querySelector(target)?.scrollIntoView({ behavior: 'smooth' });
-    }, 600);
-  }, [lenisRef, onExperience, isTransitioning]);
+
 
   return (
     <section
