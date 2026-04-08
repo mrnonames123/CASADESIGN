@@ -8,6 +8,7 @@ const Navbar = ({ hasExperienced, onExperience }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const toggleBtnRef = useRef(null);
   const firstMenuItemRef = useRef(null);
+  const mobilePanelRef = useRef(null);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
@@ -57,6 +58,45 @@ const Navbar = ({ hasExperienced, onExperience }) => {
     const onKeyDown = (e) => {
       if (e.key !== 'Escape') return;
       setIsMenuOpen(false);
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isMenuOpen]);
+
+  useEffect(() => {
+    if (!isMenuOpen) return;
+
+    const onKeyDown = (e) => {
+      if (e.key !== 'Tab') return;
+
+      const panel = mobilePanelRef.current;
+      if (!panel) return;
+
+      const focusables = Array.from(
+        panel.querySelectorAll(
+          'a[href],button:not([disabled]),textarea,input,select,[tabindex]:not([tabindex="-1"])'
+        )
+      ).filter((el) => el && el.offsetParent !== null);
+
+      if (!focusables.length) return;
+
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      const active = document.activeElement;
+
+      if (e.shiftKey) {
+        if (active === first || !panel.contains(active)) {
+          e.preventDefault();
+          last.focus();
+        }
+        return;
+      }
+
+      if (active === last) {
+        e.preventDefault();
+        first.focus();
+      }
     };
 
     window.addEventListener('keydown', onKeyDown);
@@ -153,6 +193,7 @@ const Navbar = ({ hasExperienced, onExperience }) => {
               role="dialog"
               aria-modal="true"
               aria-label="Site navigation"
+              ref={mobilePanelRef}
               className="fixed left-4 right-4 top-[88px] md:top-[104px] z-[9500] lg:hidden rounded-[28px] border border-white/10 bg-[rgba(10,10,10,0.78)] backdrop-blur-2xl shadow-[0_30px_90px_rgba(0,0,0,0.9)] overflow-hidden"
               initial={{ opacity: 0, y: -12, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
