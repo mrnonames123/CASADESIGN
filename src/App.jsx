@@ -502,6 +502,11 @@ function AppScene() {
           from { background-position: 0% 0%; }
           to { background-position: 100% 100%; }
         }
+        @keyframes casa-float {
+          0% { transform: translateY(0px) translateX(0px); }
+          50% { transform: translateY(-30px) translateX(15px); }
+          100% { transform: translateY(0px) translateX(0px); }
+        }
       `}} />
 
       {/* RENDERED LAST TO ENSURE TOP-LEVEL LAYERPRIORITY */}

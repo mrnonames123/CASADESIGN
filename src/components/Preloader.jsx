@@ -20,9 +20,27 @@ const Preloader = ({ setAppLoaded, onReady, onExited }) => {
   const [isVisible, setIsVisible] = useState(true);
   const [isExiting, setIsExiting] = useState(false);
   
+  // PARALLAX MOUSE TRACKING
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const springX = useSpring(mouseX, { damping: 50, stiffness: 200 });
+  const springY = useSpring(mouseY, { damping: 50, stiffness: 200 });
+
   const assetProgressRef = useRef(assetProgress);
   const hasRealProgressRef = useRef(false);
   const readyFiredRef = useRef(false);
+
+  useEffect(() => {
+    const handleMove = (e) => {
+      const { clientX, clientY } = e;
+      const x = (clientX - window.innerWidth / 2) / 45;
+      const y = (clientY - window.innerHeight / 2) / 45;
+      mouseX.set(x);
+      mouseY.set(y);
+    };
+    window.addEventListener('mousemove', handleMove);
+    return () => window.removeEventListener('mousemove', handleMove);
+  }, [mouseX, mouseY]);
 
   useEffect(() => {
     assetProgressRef.current = assetProgress;
@@ -81,12 +99,17 @@ const Preloader = ({ setAppLoaded, onReady, onExited }) => {
     return () => clearInterval(interval);
   }, [assetProgress, isExiting, showEnter]);
 
-  const logoOpacity = useTransform(progressMV, [0, 100], [0.1, 1]);
-  const logoScale = useTransform(progressMV, [0, 100], [1.02, 1]);
-  const logoBlurVal = useTransform(progressMV, [0, 80], [8, 0]);
+  // LOGO VISUALS
+  const logoOpacity = useTransform(progressMV, [0, 80], [0, 0.95]);
+  const logoScale = useTransform(progressMV, [0, 100], [1.08, 1]);
+  const logoBlurVal = useTransform(progressMV, [0, 95], [25, 0]);
   const logoBlur = useTransform(logoBlurVal, (v) => `blur(${v}px)`);
   
   const progressPercentWidth = useTransform(progressMV, (v) => `${v}%`);
+
+  // DECORATIVE MOTION
+  const particlesX = useTransform(springX, (v) => v * -1.5);
+  const particlesY = useTransform(springY, (v) => v * -1.5);
 
   const handleEnter = useCallback(() => {
     if (isExiting) return;
@@ -100,7 +123,7 @@ const Preloader = ({ setAppLoaded, onReady, onExited }) => {
 
     setTimeout(() => {
         setIsVisible(false);
-    }, 800);
+    }, 1200);
   }, [isExiting, onReady, setAppLoaded]);
 
   useEffect(() => {
@@ -119,116 +142,186 @@ const Preloader = ({ setAppLoaded, onReady, onExited }) => {
     <AnimatePresence onExitComplete={() => onExited?.()}>
       {isVisible && (
         <motion.div
-          className="fixed inset-0 z-[50000] flex flex-col items-center justify-center overflow-hidden bg-black select-none"
+          className="fixed inset-0 z-[50000] flex flex-col items-center justify-center overflow-hidden bg-[#050505] select-none"
           initial={{ opacity: 1 }}
           animate={{ opacity: 1 }}
           exit={{ 
-            y: '-100%',
-            transition: { duration: 0.8, ease: [0.77, 0, 0.175, 1] } 
+            opacity: 0,
+            transition: { duration: 1.2, ease: [0.77, 0, 0.175, 1] } 
           }}
         >
-          {/* STUDIO NOIR BACKGROUND */}
+          {/* STUDIO NOIR BACKGROUND WITH DYNAMIC GLOW */}
           <div className="absolute inset-0 bg-black" />
-          <div 
+          <motion.div 
             className="absolute inset-0"
             style={{
-              background: 'radial-gradient(circle at 50% 50%, rgba(166, 138, 100, 0.04) 0%, transparent 70%)'
+              background: 'radial-gradient(circle at 50% 50%, rgba(166, 138, 100, 0.08) 0%, transparent 65%)',
+              x: useTransform(springX, (v) => v * 0.8),
+              y: useTransform(springY, (v) => v * 0.8)
             }}
           />
 
           {/* NOISE OVERLAY */}
           <div
-            className="absolute inset-0 pointer-events-none opacity-[0.03] mix-blend-overlay"
+            className="absolute inset-0 pointer-events-none opacity-[0.04] mix-blend-overlay"
             style={{
               backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
               animation: 'casa-noise-drift 18s linear infinite both alternate'
             }}
           />
 
-          {/* EDITORIAL GRID LINES */}
-          <div className="absolute inset-0 pointer-events-none opacity-[0.04]">
-            <div className="absolute top-1/2 left-0 right-0 h-px bg-white" />
-            <div className="absolute left-1/2 top-0 bottom-0 w-px bg-white" />
-          </div>
+          {/* ATMOSPHERIC BOKEH (Floating Dust Particles) */}
+          <motion.div className="absolute inset-0 pointer-events-none" style={{ x: particlesX, y: particlesY }}>
+             {[...Array(22)].map((_, i) => (
+                <div 
+                    key={i}
+                    className="absolute bg-white/20 rounded-full blur-[2px]"
+                    style={{
+                        width: Math.random() * 3 + 1 + 'px',
+                        height: Math.random() * 3 + 1 + 'px',
+                        left: Math.random() * 100 + '%',
+                        top: Math.random() * 100 + '%',
+                        opacity: Math.random() * 0.3 + 0.1,
+                        animation: `casa-float ${Math.random() * 20 + 20}s linear infinite`
+                    }}
+                />
+             ))}
+          </motion.div>
 
-          {/* CORNER MARKS */}
+          {/* EDITORIAL GRID LINES (Slight Parallax) */}
+          <motion.div 
+            className="absolute inset-0 pointer-events-none opacity-[0.06]"
+            style={{ x: useTransform(springX, v => v * 0.2), y: useTransform(springY, v => v * 0.2) }}
+          >
+            <div className="absolute top-1/2 left-0 right-0 h-px bg-white/40" />
+            <div className="absolute left-1/2 top-0 bottom-0 w-px bg-white/40" />
+            <div className="absolute top-1/4 left-0 right-0 h-px bg-white/10" />
+            <div className="absolute top-3/4 left-0 right-0 h-px bg-white/10" />
+            <div className="absolute left-1/4 top-0 bottom-0 w-px bg-white/10" />
+            <div className="absolute left-3/4 top-0 bottom-0 w-px bg-white/10" />
+          </motion.div>
+
+          {/* CORNER MARKS (Stronger Parallax) */}
           {[
-            'top-8 left-8',
-            'top-8 right-8',
-            'bottom-8 left-8',
-            'bottom-8 right-8'
+            'top-10 left-10',
+            'top-10 right-10',
+            'bottom-10 left-10',
+            'bottom-10 right-10'
           ].map((pos) => (
-            <div key={pos} className={`absolute ${pos} w-10 h-10 opacity-20`}>
+            <motion.div 
+                key={pos} 
+                className={`absolute ${pos} w-14 h-14 opacity-30`}
+                style={{ x: useTransform(springX, v => v * 0.5), y: useTransform(springY, v => v * 0.5) }}
+            >
               <div className="absolute top-0 left-0 w-full h-px bg-white" />
               <div className="absolute top-0 left-0 h-full w-px bg-white" />
-            </div>
+            </motion.div>
           ))}
 
-          {/* LOCKUP */}
+          {/* LOCKUP CENTERPIECE */}
           <motion.div 
             className="relative z-10 flex flex-col items-center"
             style={{ 
                 opacity: logoOpacity, 
                 scale: logoScale,
-                filter: logoBlur
+                filter: logoBlur,
+                x: springX,
+                y: springY
             }}
           >
-            <div className="flex flex-col items-center">
-                <span className="font-display text-[clamp(2rem,6vw,4rem)] text-white tracking-[0.5em] uppercase leading-none mb-4">
-                    CASA DESIGN
-                </span>
-                <span className="font-body text-[9px] md:text-[11px] text-[#A68A64] tracking-[0.8em] uppercase opacity-80">
-                    Architectural Intelligence
-                </span>
+            <div className="flex flex-col items-center text-center">
+                <h1 className="flex items-baseline gap-x-[0.2em] font-display text-[clamp(2.4rem,7vw,4.8rem)] tracking-[-0.03em] leading-none mb-6">
+                    <span className="text-white uppercase casa-shimmer-white">CASA</span>
+                    <span className="italic font-light text-[#A68A64] casa-shimmer-bronze">DESIGN</span>
+                </h1>
+                <div className="relative flex flex-col items-center">
+                    <span className="font-body text-[10px] md:text-[12px] text-white/40 tracking-[1.1em] uppercase ml-[1.1em]">
+                        Architectural Intelligence
+                    </span>
+                    <motion.div 
+                        className="mt-6 w-8 h-[1px] bg-[#A68A64]/30"
+                        initial={{ scaleX: 0 }}
+                        animate={{ scaleX: 1 }}
+                        transition={{ duration: 1.5, delay: 0.8 }}
+                    />
+                </div>
             </div>
           </motion.div>
 
           {/* PROGRESS INTERFACE */}
-          <div className="absolute bottom-16 left-1/2 -translate-x-1/2 w-[min(400px,80vw)] flex flex-col gap-6">
+          <div className="absolute bottom-20 left-1/2 -translate-x-1/2 w-[min(480px,84vw)] flex flex-col gap-8">
             <AnimatePresence mode="wait">
                 {!showEnter ? (
                     <motion.div 
                         key="loading"
-                        className="flex flex-col gap-3"
+                        className="flex flex-col gap-4"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        exit={{ opacity: 0, y: -10 }}
+                        exit={{ opacity: 0, y: -8, scale: 0.98 }}
+                        transition={{ duration: 0.6 }}
                     >
-                        <div className="flex justify-between items-end text-[10px] uppercase font-body tracking-[0.3em] text-white/40">
-                            <span>Initializing Core</span>
+                        <div className="flex justify-between items-end text-[9px] uppercase font-body tracking-[0.45em] text-white/50">
+                            <span className="flex items-center gap-3">
+                                <motion.span 
+                                    className="w-1.5 h-1.5 bg-[#A68A64] rounded-full"
+                                    animate={{ opacity: [0.3, 1, 0.3] }}
+                                    transition={{ duration: 1.5, repeat: Infinity }}
+                                />
+                                Synchronizing
+                            </span>
                             <LoadingText progressMV={progressMV} />
                         </div>
-                        <div className="h-0.5 w-full bg-white/5 rounded-full overflow-hidden">
+                        <div className="h-[2px] w-full bg-white/5 rounded-full overflow-hidden">
                             <motion.div 
-                                className="h-full bg-[#A68A64]" 
+                                className="h-full bg-gradient-to-r from-transparent via-[#A68A64] to-[#A68A64]" 
                                 style={{ width: progressPercentWidth }}
                             />
                         </div>
                     </motion.div>
                 ) : (
-                    <motion.button
-                        key="enter"
-                        className="group relative flex flex-col items-center py-4"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8, ease: "easeOut" }}
-                        onClick={handleEnter}
+                    <motion.div
+                        key="enter-wrap"
+                        className="flex flex-col items-center"
                     >
-                        <span className="text-[11px] uppercase tracking-[0.6em] text-white/90 group-hover:text-white transition-colors">
-                            Enter Experience
-                        </span>
+                        <motion.button
+                            className="group relative px-16 py-5 rounded-full border border-white/5 bg-white/[0.02] backdrop-blur-md overflow-hidden transition-all duration-700 hover:border-[#A68A64]/40"
+                            initial={{ opacity: 0, y: 15 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={handleEnter}
+                        >
+                            <span className="relative z-10 text-[11px] uppercase tracking-[0.65em] text-white/80 group-hover:text-white transition-colors ml-[0.65em]">
+                                Experience Now
+                            </span>
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#A68A64]/5 to-transparent -translate-x-full group-hover:animate-[shimmer_2s_infinite]" />
+                        </motion.button>
+                        
                         <motion.div 
-                            className="mt-4 w-12 h-px bg-[#A68A64]/40 group-hover:w-24 group-hover:bg-[#A68A64] transition-all duration-700"
-                            animate={{ opacity: [0.3, 1, 0.3] }}
-                            transition={{ duration: 2, repeat: Infinity }}
-                        />
-                    </motion.button>
+                            className="mt-8 font-body text-[8px] uppercase tracking-[0.4em] text-white/20"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.4 }}
+                        >
+                            Press Enter to Proceed
+                        </motion.div>
+                    </motion.div>
                 )}
             </AnimatePresence>
           </div>
 
-          {/* VIGNETTE */}
-          <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_50%_50%,transparent_20%,rgba(0,0,0,0.8)_100%)]" />
+          {/* VIGNETTE & LIGHT LEAK */}
+          <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_50%_45%,transparent_20%,rgba(0,0,0,0.85)_100%)]" />
+          <motion.div 
+            className="absolute -top-1/4 -left-1/4 w-full h-full bg-[#A68A64]/5 blur-[120px] rounded-full pointer-events-none"
+            animate={{ 
+                x: [0, 50, 0],
+                y: [0, 30, 0],
+                opacity: [0.3, 0.5, 0.3]
+            }}
+            transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+          />
 
         </motion.div>
       )}
