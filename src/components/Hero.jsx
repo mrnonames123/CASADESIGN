@@ -88,9 +88,10 @@ const Hero = ({ animateIn = false, onExperience, hasExperienced, isAtTop = true,
 
   useEffect(() => {
     if (animateIn) {
-      // Faster, more direct narrative landing sequence
-      const t1 = setTimeout(() => setShowTitle(true), 500);
-      const t2 = setTimeout(() => setShowAction(true), 1200);
+      // Photo-first narrative: ensure the background scene is established 
+      // before revealing the typography centerpiece.
+      const t1 = setTimeout(() => setShowTitle(true), 1100); 
+      const t2 = setTimeout(() => setShowAction(true), 1800);
       return () => {
         clearTimeout(t1);
         clearTimeout(t2);

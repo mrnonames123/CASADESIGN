@@ -314,7 +314,7 @@ function AppScene() {
       
       {/* GLOBAL 3D CANVAS (Always rendered after initial mount to pre-load textures) */}
       {canvasMounted && (
-        <div style={{ opacity: preloaderActive ? 0 : 1, transition: 'opacity 1.5s ease-out' }}>
+        <div style={{ opacity: preloaderActive ? 0 : 1, transition: 'opacity 1.0s cubic-bezier(0.22, 1, 0.36, 1)' }}>
           <MainBackgroundCanvas 
             scrollProgressRef={scrollProgressRef}
             scrollProgress={0}
