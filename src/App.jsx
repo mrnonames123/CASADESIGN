@@ -30,7 +30,7 @@ import SideHUDNavigator from './components/SideHUDNavigator';
 gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
 // 120FPS Performance Path: High-priority ticker synchronization
 gsap.ticker.fps(120);
-gsap.ticker.lagSmoothing(0); // Disable lag smoothing to prevent visual catches at high refresh rates
+gsap.ticker.lagSmoothing(500, 33); // Restored standard smoothing to handle parsing spikes gracefully
 
 function AppScene() {
   const containerRef = useRef(null);
@@ -55,8 +55,12 @@ function AppScene() {
   const [canvasMounted, setCanvasMounted] = useState(false);
 
   useEffect(() => {
-    // Priority mounting to ensure no visual pop-in during preloader transition.
-    setCanvasMounted(true);
+    // Now that the preloader is lightweight 2D, we can start background 
+    // loading much sooner to improve perceived speed.
+    const timer = window.setTimeout(() => {
+      setCanvasMounted(true);
+    }, 800); 
+    return () => window.clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -494,6 +498,10 @@ function AppScene() {
         .font-body { font-family: 'Inter', sans-serif !important; font-weight: 300; }
         body { font-family: 'Inter', sans-serif; font-weight: 300; background: #050505; }
         h2 { font-family: 'Playfair Display', serif; }
+        @keyframes casa-noise-drift {
+          from { background-position: 0% 0%; }
+          to { background-position: 100% 100%; }
+        }
       `}} />
 
       {/* RENDERED LAST TO ENSURE TOP-LEVEL LAYERPRIORITY */}

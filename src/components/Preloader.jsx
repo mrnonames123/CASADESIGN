@@ -1,375 +1,28 @@
-import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { ContactShadows, Environment, useGLTF, useProgress } from '@react-three/drei';
-import * as THREE from 'three';
-import { RectAreaLightUniformsLib } from 'three/examples/jsm/lights/RectAreaLightUniformsLib.js';
-import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
-import { SSAOPass } from 'three/examples/jsm/postprocessing/SSAOPass.js';
-import gsap from 'gsap';
-import { sanitizeGltfMaterials } from '../utils/sanitizeGltfMaterials';
-import { cloneGltfScene } from '../utils/cloneGltfScene';
-const GOLD_RIM = '#D4AF37';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AnimatePresence, motion, useMotionValue, useTransform } from 'framer-motion';
+import { useProgress } from '@react-three/drei';
 
-let rectAreaLightUniformsInitialized = false;
-const initRectAreaLightUniforms = () => {
-  if (rectAreaLightUniformsInitialized) return;
-  RectAreaLightUniformsLib.init();
-  rectAreaLightUniformsInitialized = true;
-};
-if (typeof window !== 'undefined') initRectAreaLightUniforms();
-
-const clamp01 = (value) => Math.min(1, Math.max(0, value));
-const map01 = (v, inMin, inMax) => clamp01((v - inMin) / (inMax - inMin));
-const damp = (current, target, lambda, dt) => THREE.MathUtils.damp(current, target, lambda, dt);
-const dampAngle = (current, target, lambda, dt) => {
-  const twoPi = Math.PI * 2;
-  const delta = THREE.MathUtils.euclideanModulo((target - current) + Math.PI, twoPi) - Math.PI;
-  const step = 1 - Math.exp(-lambda * dt);
-  return current + delta * step;
-};
-
-const enhanceMaterials = (root) => {
-  if (!root) return;
-  root.traverse((node) => {
-    if (!node.isMesh) return;
-    if (node.geometry?.attributes?.uv && !node.geometry?.attributes?.uv2) {
-      // AO maps need uv2; many GLBs only ship uv. Copying is a common fallback.
-      node.geometry.setAttribute('uv2', node.geometry.attributes.uv.clone());
-    }
-    const materials = Array.isArray(node.material) ? node.material : [node.material];
-    materials.forEach((mat) => {
-      if (!mat) return;
-      if (mat.isMeshStandardMaterial) {
-        if (!mat.userData.__casaOriginalColor) {
-          mat.userData.__casaOriginalColor = mat.color?.clone?.() ?? new THREE.Color(1, 1, 1);
-        }
-        // Studio Noir leather: less plastic, more tufted depth.
-        mat.metalness = 0.2;
-        mat.roughness = 0.6;
-        mat.envMapIntensity = Math.max(1.45, mat.envMapIntensity ?? 1);
-        if (mat.aoMap) mat.aoMapIntensity = Math.max(1.25, mat.aoMapIntensity ?? 1);
-        mat.needsUpdate = true;
-      }
-    });
-  });
-};
-
-function InitRectAreaLights() {
-  // Must run before the first render that compiles materials using RectAreaLight.
-  initRectAreaLightUniforms();
-  return null;
-}
-
-function ExposureDriver({ progress01 }) {
-  const { gl } = useThree();
-  useFrame(() => {
-    const p = clamp01(progress01);
-    gl.toneMappingExposure = THREE.MathUtils.lerp(0.7, 1.4, p);
-  });
-  return null;
-}
-
-function SofaPostFX({ enabled }) {
-  const { gl, scene, camera, size } = useThree();
-  const composerRef = useRef(null);
-
+// Fine-grained local updater for loading text to avoid parent re-renders
+const LoadingText = ({ progressMV }) => {
+  const textRef = useRef(null);
   useEffect(() => {
-    if (!enabled) return undefined;
-
-    const composer = new EffectComposer(gl);
-    composer.addPass(new RenderPass(scene, camera));
-
-    const bloom = new UnrealBloomPass(
-      new THREE.Vector2(size.width, size.height),
-      0.4, // strength
-      0.9, // radius
-      0.85 // threshold
-    );
-    composer.addPass(bloom);
-
-    composer.setSize(size.width, size.height);
-    composerRef.current = composer;
-
-    return () => {
-      composerRef.current = null;
-      composer.dispose();
-    };
-  }, [camera, enabled, gl, scene, size.height, size.width]);
-
-  useEffect(() => {
-    if (!enabled) return;
-    composerRef.current?.setSize(size.width, size.height);
-  }, [enabled, size.height, size.width]);
-
-  useFrame(() => {
-    if (!enabled || !composerRef.current) return;
-    composerRef.current.render();
-  }, 1);
-
-  return null;
-}
-
-// CD marquee removed.
-
-function CinematicZoomRoute({ isExiting, rigRef, onBlackout }) {
-  const { camera } = useThree();
-  const firedRef = useRef(false);
-  const tlRef = useRef(null);
-
-  useEffect(() => {
-    if (!isExiting) return;
-    if (tlRef.current) return;
-
-    const rig = rigRef?.current;
-    const group = rig?.group;
-    const rimMain = rig?.rimMain;
-    const rimLeft = rig?.rimLeft;
-    const rimRight = rig?.rimRight;
-
-    if (!group || !rimMain || !rimLeft || !rimRight) return;
-
-    // Ensure close-up clipping and consistent starting camera.
-    camera.near = 0.01;
-    camera.updateProjectionMatrix();
-
-    // Engulf scale: 1.2 -> 2.5 (multiplied by base model scale).
-    const baseScale = rig?.baseScale ?? 1;
-    const fromScale = baseScale * 1.2;
-    const toScale = baseScale * 2.5;
-    group.scale.setScalar(fromScale);
-
-    const rimMainStart = rimMain.intensity || 0;
-    const rimLeftStart = rimLeft.intensity || 0;
-    const rimRightStart = rimRight.intensity || 0;
-
-    const tl = gsap.timeline({
-      defaults: { ease: 'power4.inOut' },
-      duration: 1.2
+    return progressMV.on('change', (v) => {
+      if (textRef.current) textRef.current.textContent = `${Math.round(v)}%`;
     });
-
-    // 0s - 0.5s: rim "light leak" triples.
-    tl.to(rimMain, { intensity: rimMainStart * 3, duration: 0.5 }, 0);
-    tl.to(rimLeft, { intensity: rimLeftStart * 3, duration: 0.5 }, 0);
-    tl.to(rimRight, { intensity: rimRightStart * 3, duration: 0.5 }, 0);
-
-    // 0.5s - 1.2s: camera accelerates into the sofa + scale engulfs.
-    tl.to(camera.position, { z: -1.4, y: 0.05, duration: 0.7 }, 0.5);
-    tl.to(group.scale, { x: toScale, y: toScale, z: toScale, duration: 0.7 }, 0.5);
-
-    // 1.1s: trigger app reveal (blackout moment).
-    tl.call(() => {
-      if (firedRef.current) return;
-      firedRef.current = true;
-      onBlackout?.();
-    }, null, 1.1);
-
-    tlRef.current = tl;
-  }, [camera, isExiting, onBlackout, rigRef]);
-
-  useFrame(() => {
-    if (!isExiting) return;
-    camera.updateProjectionMatrix();
-  });
-
-  return null;
-}
-
-const SofaLoaderScene = ({ progress01, isExiting, parallaxRef, rigRef, onArrived }) => {
-  const { camera } = useThree();
-  const groupRef = useRef(null);
-  const keyLightRef = useRef(null);
-  const fillLightRef = useRef(null);
-  const rimLightRef = useRef(null);
-  const rimLeftRef = useRef(null);
-  const rimRightRef = useRef(null);
-  const envRef = useRef(null);
-  const { scene: gltfScene } = useGLTF('/sofa.glb');
-  const arrivedFiredRef = useRef(false);
-  
-  // Overall preloader sofa scale multiplier.
-  const scaleMultiplier = 0.85;
-
-  // IMPORTANT: process synchronously in useMemo to minimize main-thread work at mount.
-  const { scene, baseSize, silhouetteMaterials } = useMemo(() => {
-    const cloned = cloneGltfScene(gltfScene);
-
-    // One-pass traversal for sanitization and enhancement
-    sanitizeGltfMaterials(cloned);
-    
-    cloned.traverse((node) => {
-      if (!node.isMesh) return;
-      if (node.geometry?.attributes?.uv && !node.geometry?.attributes?.uv2) {
-        node.geometry.setAttribute('uv2', node.geometry.attributes.uv.clone());
-      }
-      const materials = Array.isArray(node.material) ? node.material : [node.material];
-      materials.forEach((mat) => {
-        if (!mat || !mat.isMeshStandardMaterial) return;
-        if (!mat.userData.__casaOriginalColor) {
-          mat.userData.__casaOriginalColor = mat.color?.clone?.() ?? new THREE.Color(1, 1, 1);
-        }
-        // Studio Noir leather: less plastic, more tufted depth.
-        mat.metalness = 0.2;
-        mat.roughness = 0.6;
-        mat.envMapIntensity = Math.max(1.45, mat.envMapIntensity ?? 1);
-        if (mat.aoMap) mat.aoMapIntensity = Math.max(1.25, mat.aoMapIntensity ?? 1);
-        mat.needsUpdate = true;
-      });
-    });
-
-    cloned.position.set(0, 0, 0);
-    const box = new THREE.Box3().setFromObject(cloned);
-    const size = new THREE.Vector3();
-    const center = new THREE.Vector3();
-    box.getSize(size);
-    box.getCenter(center);
-
-    // Pivot closer to the backrest center (reduces wobble during zoom/rotation).
-    const pivot = center.clone();
-    pivot.y += size.y * 0.18;
-    cloned.position.sub(pivot);
-
-    const mats = [];
-    cloned.traverse((node) => {
-      if (node.isMesh) {
-        const materials = Array.isArray(node.material) ? node.material : [node.material];
-        materials.forEach(m => {
-          if (m?.userData?.__casaOriginalColor) mats.push(m);
-        });
-      }
-    });
-
-    return { scene: cloned, baseSize: size, silhouetteMaterials: mats };
-  }, [gltfScene]);
-
-  useEffect(() => {
-    if (!rigRef?.current) return;
-    rigRef.current.group = groupRef.current;
-    rigRef.current.rimMain = rimLightRef.current;
-    rigRef.current.rimLeft = rimLeftRef.current;
-    rigRef.current.rimRight = rimRightRef.current;
-    rigRef.current.baseScale = 1;
-  }, [rigRef]);
-
-  useFrame((state, dt) => {
-    if (!groupRef.current) return;
-    if (isExiting) return;
-
-    // dt safety: prevent physics/damping jumps if browser freezes briefly.
-    const cappedDt = Math.min(dt, 0.08);
-
-    const p = clamp01(progress01);
-    const moveT = map01(p, 0.05, 0.8);
-    const finalT = map01(p, 0.8, 1.0);
-    const litT = map01(p, 0.05, 0.9);
-    const rimT = map01(p, 0.8, 1.0);
-    const appearT = map01(p, 0.02, 0.08);
-    const appearScale = THREE.MathUtils.lerp(0.001, 1, appearT);
-
-    const targetZ = THREE.MathUtils.lerp(-12, 0, moveT);
-    const rotAt80 = THREE.MathUtils.degToRad(30);
-    const targetRotY = finalT > 0
-      ? THREE.MathUtils.lerp(rotAt80, 0, finalT)
-      : THREE.MathUtils.lerp(Math.PI / 4, rotAt80, moveT);
-
-    groupRef.current.position.z = damp(groupRef.current.position.z, targetZ, 3.1, cappedDt);
-
-    const parallax = parallaxRef?.current ?? { x: 0, y: 0 };
-    const maxYaw = THREE.MathUtils.degToRad(8);
-    const maxPitch = THREE.MathUtils.degToRad(3);
-    const composedYaw = targetRotY + (maxYaw * parallax.x);
-    const parallaxPitch = maxPitch * -parallax.y;
-
-    groupRef.current.rotation.y = dampAngle(groupRef.current.rotation.y, composedYaw, 3.1, cappedDt);
-    groupRef.current.rotation.x = dampAngle(groupRef.current.rotation.x, parallaxPitch, 4.2, cappedDt);
-    groupRef.current.rotation.z = dampAngle(groupRef.current.rotation.z, 0, 4.2, cappedDt);
-
-    const distance = Math.max(0.1, Math.abs(camera.position.z - groupRef.current.position.z));
-    const visibleHeight = 2 * distance * Math.tan(THREE.MathUtils.degToRad(camera.fov * 0.5));
-    const visibleWidth = visibleHeight * (camera.aspect || 1);
-    const isNarrow = (camera.aspect || 1) < 0.72;
-    const fillFactor = isNarrow ? 0.95 : 0.75;
-    const fitScale = Math.min(visibleWidth / (baseSize.x || 1), visibleHeight / (baseSize.y || 1)) * fillFactor * scaleMultiplier;
-
-    if (rigRef?.current) rigRef.current.baseScale = fitScale;
-
-    const readyScaleT = 1 + 0.08 * map01(p, 0.8, 1.0);
-    const targetScale = fitScale * readyScaleT * appearScale;
-    groupRef.current.scale.x = damp(groupRef.current.scale.x, targetScale, 4.0, cappedDt);
-    groupRef.current.scale.y = groupRef.current.scale.x;
-    groupRef.current.scale.z = groupRef.current.scale.x;
-
-    const baseY = isNarrow ? -0.42 : -0.55;
-    const breathe = Math.sin(state.clock.getElapsedTime() * 0.55) * 0.08 * map01(p, 0.25, 1.0);
-    groupRef.current.position.y = damp(groupRef.current.position.y, baseY + breathe, 3.0, cappedDt);
-
-    if (keyLightRef.current) keyLightRef.current.intensity = damp(keyLightRef.current.intensity, THREE.MathUtils.lerp(0.0, 0.28, litT), 3.0, cappedDt);
-    if (fillLightRef.current) fillLightRef.current.intensity = damp(fillLightRef.current.intensity, THREE.MathUtils.lerp(0.0, 0.18, litT), 3.0, cappedDt);
-    if (rimLeftRef.current) rimLeftRef.current.intensity = damp(rimLeftRef.current.intensity, THREE.MathUtils.lerp(0.0, 52.0, rimT), 2.6, cappedDt);
-    if (rimRightRef.current) rimRightRef.current.intensity = damp(rimRightRef.current.intensity, THREE.MathUtils.lerp(0.0, 52.0, rimT), 2.6, cappedDt);
-
-    if (envRef.current) envRef.current.environmentIntensity = THREE.MathUtils.lerp(0.08, 0.14, litT);
-
-    const silhouette = p < 0.2;
-    if (groupRef.current.userData.lastSilhouette !== silhouette) {
-      groupRef.current.userData.lastSilhouette = silhouette;
-      silhouetteMaterials.forEach((mat) => {
-        const original = mat.userData.__casaOriginalColor;
-        if (original) {
-          if (silhouette) mat.color.set('#000000');
-          else mat.color.copy(original);
-        }
-      });
-    }
-
-    if (!arrivedFiredRef.current && p >= 0.94) {
-      arrivedFiredRef.current = true;
-      onArrived?.();
-    }
-  });
-
-  return (
-    <group>
-      <InitRectAreaLights />
-      <ambientLight intensity={0.05} />
-      <spotLight ref={keyLightRef} intensity={0.0} position={[-2.8, 1.9, 4.6]} color="#fff0df" angle={0.55} penumbra={0.85} distance={15} />
-      <directionalLight ref={fillLightRef} intensity={0.0} position={[-3.4, 1.4, 1.8]} color="#d6f0ff" />
-
-      <rectAreaLight ref={rimLightRef} position={[0.0, 1.35, -4.2]} rotation={[0, Math.PI, 0]} width={3.6} height={2.2} intensity={0.0} color={GOLD_RIM} />
-      <rectAreaLight ref={rimLeftRef} position={[-2.9, 1.1, -4.1]} rotation={[0, Math.PI * 0.78, 0]} width={1.8} height={1.2} intensity={0.0} color={GOLD_RIM} />
-      <rectAreaLight ref={rimRightRef} position={[2.9, 1.1, -4.1]} rotation={[0, -Math.PI * 0.78, 0]} width={1.8} height={1.2} intensity={0.0} color={GOLD_RIM} />
-
-      <pointLight position={[0, -2, 2]} intensity={0.5} color={GOLD_RIM} decay={2} distance={8} />
-      <Environment ref={envRef} preset="studio" environmentIntensity={0.0} />
-
-      <group
-        ref={groupRef}
-        position={[0, -0.35, -12]}
-        rotation={[0, Math.PI / 4, 0]}
-        scale={[0.001, 0.001, 0.001]}
-      >
-        <primitive object={scene} />
-      </group>
-
-      <ContactShadows opacity={0.4} scale={10} blur={3.8} far={20} position={[0, -0.95, 0]} />
-    </group>
-  );
+  }, [progressMV]);
+  return <span ref={textRef} className="uppercase tabular-nums font-mono">0%</span>;
 };
 
 const Preloader = ({ setAppLoaded, onReady, onExited }) => {
   const { progress: assetProgress } = useProgress();
-  const [progress, setProgress] = useState(0);
+  const progressMV = useMotionValue(0);
   const [showEnter, setShowEnter] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [isExiting, setIsExiting] = useState(false);
-  const [sofaArrived, setSofaArrived] = useState(false);
+  
   const assetProgressRef = useRef(assetProgress);
   const hasRealProgressRef = useRef(false);
   const readyFiredRef = useRef(false);
-  const parallaxRef = useRef({ x: 0, y: 0 });
-  const rigRef = useRef({ group: null, rimMain: null, rimLeft: null, rimRight: null, baseScale: 1 });
 
   useEffect(() => {
     assetProgressRef.current = assetProgress;
@@ -386,7 +39,7 @@ const Preloader = ({ setAppLoaded, onReady, onExited }) => {
     const tick = (now) => {
       const real = assetProgressRef.current || 0;
       if (real >= 100) {
-        setProgress(100);
+        progressMV.set(100);
         return;
       }
 
@@ -394,338 +47,193 @@ const Preloader = ({ setAppLoaded, onReady, onExited }) => {
       last = now;
 
       // Kickoff: show some movement even while the first assets haven't reported progress yet.
-      const kickoff = Math.min(12, ((now - start) / 650) * 12);
+      const kickoff = Math.min(15, ((now - start) / 500) * 15);
       const target = hasRealProgressRef.current ? Math.min(99.5, real) : kickoff;
 
-      // Smoothly approach the target (time-based so it feels consistent across FPS).
-      const alpha = 1 - Math.exp(-9.0 * dt); // Slightly slower approach for more 'weight'
+      // Smoothly approach the target
+      const alpha = 1 - Math.exp(-9.0 * dt);
       const desired = current + (target - current) * alpha;
 
-      // Clamp rate so it never "jumps" when real progress updates in chunks.
-      const maxUpPerSec = hasRealProgressRef.current ? 45 : 18;
+      const maxUpPerSec = hasRealProgressRef.current ? 60 : 25;
       const maxStep = maxUpPerSec * dt;
       current = Math.min(desired, current + maxStep);
 
-      setProgress(Math.max(0, Math.min(99.5, current)));
+      progressMV.set(Math.max(0, Math.min(99.5, current)));
       raf = requestAnimationFrame(tick);
     };
 
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, []);
+  }, [progressMV]);
 
-  // Show "Proceed Now" only after real assets are loaded and the sofa has arrived.
+  // Transition to "Proceed Now" logic
   useEffect(() => {
-    if (showEnter) return undefined;
-    if (isExiting) return undefined;
-    if (assetProgress < 100) return undefined;
-    if (!sofaArrived) return undefined;
+    if (showEnter || isExiting) return undefined;
+    
+    // Auto-proceed to Enter state when assets are ready
+    const checkReady = () => {
+      if (assetProgress >= 100) {
+        setShowEnter(true);
+      }
+    };
 
-    const timer = setTimeout(() => setShowEnter(true), 350);
-    return () => clearTimeout(timer);
-  }, [assetProgress, isExiting, showEnter, sofaArrived]);
+    const interval = setInterval(checkReady, 100);
+    return () => clearInterval(interval);
+  }, [assetProgress, isExiting, showEnter]);
 
-  const progress01 = useMemo(() => Math.min(1, Math.max(0, progress / 100)), [progress]);
-  const logoOpacity = useMemo(() => 0.06 + progress01 * 0.94, [progress01]);
-  const logoScale = useMemo(() => 1.05 - progress01 * 0.05, [progress01]);
-  const logoBlur = useMemo(() => `${Math.round((1 - progress01) * 10)}px`, [progress01]);
-
-  const loadingVariants = useMemo(() => ({
-    initial: { opacity: 1, y: 0 },
-    animate: { opacity: 1, y: 0 },
-    exit: {
-      y: '-100%',
-      transition: { duration: 0.35, ease: 'easeInOut' }
-    }
-  }), []);
+  const logoOpacity = useTransform(progressMV, [0, 100], [0.1, 1]);
+  const logoScale = useTransform(progressMV, [0, 100], [1.02, 1]);
+  const logoBlurVal = useTransform(progressMV, [0, 80], [8, 0]);
+  const logoBlur = useTransform(logoBlurVal, (v) => `blur(${v}px)`);
+  
+  const progressPercentWidth = useTransform(progressMV, (v) => `${v}%`);
 
   const handleEnter = useCallback(() => {
-    if (!showEnter) return;
     if (isExiting) return;
     setIsExiting(true);
 
-    // Enter should feel instant: mark app ready immediately, then let the preloader exit animate.
     if (!readyFiredRef.current) {
       readyFiredRef.current = true;
       onReady?.();
       if (setAppLoaded) setAppLoaded(true);
     }
 
-    window.setTimeout(() => setIsVisible(false), 420);
-  }, [isExiting, onReady, setAppLoaded, showEnter]);
+    setTimeout(() => {
+        setIsVisible(false);
+    }, 800);
+  }, [isExiting, onReady, setAppLoaded]);
 
   useEffect(() => {
     if (!showEnter || isExiting) return undefined;
-
     const onKeyDown = (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
-        e.stopPropagation();
         handleEnter();
       }
     };
-
-    window.addEventListener('keydown', onKeyDown, { capture: true });
-    return () => window.removeEventListener('keydown', onKeyDown, { capture: true });
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
   }, [handleEnter, isExiting, showEnter]);
 
-  useEffect(() => {
-    const update = (x, y) => {
-      parallaxRef.current = { x: THREE.MathUtils.clamp(x, -1, 1), y: THREE.MathUtils.clamp(y, -1, 1) };
-    };
-
-    const onMouseMove = (e) => {
-      const nx = (e.clientX / window.innerWidth) * 2 - 1;
-      const ny = (e.clientY / window.innerHeight) * 2 - 1;
-      update(nx, ny);
-    };
-
-    const onTouchMove = (e) => {
-      const t = e.touches?.[0];
-      if (!t) return;
-      const nx = (t.clientX / window.innerWidth) * 2 - 1;
-      const ny = (t.clientY / window.innerHeight) * 2 - 1;
-      update(nx, ny);
-    };
-
-    window.addEventListener('mousemove', onMouseMove, { passive: true });
-    window.addEventListener('touchmove', onTouchMove, { passive: true });
-    return () => {
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('touchmove', onTouchMove);
-    };
-  }, []);
-
   return (
-    <AnimatePresence onExitComplete={() => {
-      onExited?.();
-    }}>
+    <AnimatePresence onExitComplete={() => onExited?.()}>
       {isVisible && (
         <motion.div
-          className="casa-preloader fixed inset-0 z-[50000] flex flex-col items-center justify-center overflow-hidden select-none touch-none"
-          style={{ 
-            pointerEvents: isExiting ? 'none' : 'auto', 
-            position: 'fixed',
-            backgroundColor: '#000'
+          className="fixed inset-0 z-[50000] flex flex-col items-center justify-center overflow-hidden bg-black select-none"
+          initial={{ opacity: 1 }}
+          animate={{ opacity: 1 }}
+          exit={{ 
+            y: '-100%',
+            transition: { duration: 0.8, ease: [0.77, 0, 0.175, 1] } 
           }}
-          variants={loadingVariants}
-          initial="initial"
-          animate="animate"
-          exit="exit"
         >
-          {/* Studio noir base (warm center, deep corners) */}
-          <div
+          {/* STUDIO NOIR BACKGROUND */}
+          <div className="absolute inset-0 bg-black" />
+          <div 
             className="absolute inset-0"
             style={{
-              background:
-                'radial-gradient(ellipse at 50% 45%, rgba(255,255,255,0.03) 0%, rgba(0,0,0,1) 70%)'
+              background: 'radial-gradient(circle at 50% 50%, rgba(166, 138, 100, 0.04) 0%, transparent 70%)'
             }}
           />
 
-          {/* Grain texture (slow drift) */}
-          <motion.div
-            className="absolute inset-0 pointer-events-none z-[6]"
-            style={{
-              backgroundImage:
-                `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.045'/%3E%3C/svg%3E")`,
-              opacity: 0.022,
-              mixBlendMode: 'overlay'
-            }}
-            animate={{ backgroundPosition: ['0% 0%', '100% 100%'] }}
-            transition={{ duration: 18, ease: 'linear', repeat: Infinity, repeatType: 'mirror' }}
-          />
-
-          {/* Subtle vignette */}
+          {/* NOISE OVERLAY */}
           <div
-            className="absolute inset-0 pointer-events-none z-[6]"
+            className="absolute inset-0 pointer-events-none opacity-[0.03] mix-blend-overlay"
             style={{
-              background: 'radial-gradient(1000px 720px at 50% 45%, transparent 42%, rgba(0,0,0,0.65) 100%)'
+              backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+              animation: 'casa-noise-drift 18s linear infinite both alternate'
             }}
           />
 
-          {/* Corner marks — editorial grid */}
+          {/* EDITORIAL GRID LINES */}
+          <div className="absolute inset-0 pointer-events-none opacity-[0.04]">
+            <div className="absolute top-1/2 left-0 right-0 h-px bg-white" />
+            <div className="absolute left-1/2 top-0 bottom-0 w-px bg-white" />
+          </div>
+
+          {/* CORNER MARKS */}
           {[
-            'top-6 left-6',
-            'top-6 right-6',
-            'bottom-6 left-6',
-            'bottom-6 right-6'
+            'top-8 left-8',
+            'top-8 right-8',
+            'bottom-8 left-8',
+            'bottom-8 right-8'
           ].map((pos) => (
-            <div key={pos} className={`absolute ${pos} w-8 h-8 pointer-events-none z-10 opacity-40`}>
-              <div className="absolute top-0 left-0 w-full h-[1px]" style={{ background: 'linear-gradient(90deg, rgba(245,245,247,0.5), transparent)' }} />
-              <div className="absolute top-0 left-0 h-full w-[1px]" style={{ background: 'linear-gradient(180deg, rgba(245,245,247,0.5), transparent)' }} />
+            <div key={pos} className={`absolute ${pos} w-10 h-10 opacity-20`}>
+              <div className="absolute top-0 left-0 w-full h-px bg-white" />
+              <div className="absolute top-0 left-0 h-full w-px bg-white" />
             </div>
           ))}
 
-          {/* Additional decorative grid lines to fill whitespace */}
-          <div className="absolute inset-0 pointer-events-none opacity-[0.03] z-[2]">
-            <div className="absolute top-1/4 left-0 right-0 h-[1px] bg-white" />
-            <div className="absolute top-3/4 left-0 right-0 h-[1px] bg-white" />
-            <div className="absolute left-1/4 top-0 bottom-0 w-[1px] bg-white" />
-            <div className="absolute left-3/4 top-0 bottom-0 w-[1px] bg-white" />
-          </div>
-
-          {/* Logo + slogan (Atelier lockup) */}
-          <div className="casa-preloader-lockup absolute left-1/2 -translate-x-1/2 z-10 flex flex-col items-center justify-center">
-            <motion.div
-              className="text-center uppercase casa-logo-shimmer"
-              initial={{ opacity: 0, letterSpacing: '0.5em' }}
-              animate={
-                isExiting
-                  ? { opacity: 0 }
-                  : { opacity: 1, letterSpacing: '1.45em' }
-              }
-              transition={isExiting ? { duration: 0.35, ease: 'easeOut' } : { duration: 2, ease: 'easeOut' }}
-              style={{
-                scale: logoScale,
-                filter: `blur(${logoBlur})`,
-                fontFamily: '"Bodoni Moda","Didot","Bodoni MT","Playfair Display",serif',
-                fontWeight: 400,
-                fontSize: 'clamp(1.6rem, 4.4vw, 3.2rem)',
-                transformOrigin: '50% 50%',
-                textShadow: '0 18px 80px rgba(0,0,0,0.45)'
-              }}
-            >
-              CASA DESIGN
-            </motion.div>
-            <motion.div
-              className="text-center uppercase"
-              initial={{ opacity: 0, y: 3 }}
-              animate={isExiting ? { opacity: 0, y: -2 } : { opacity: 1, y: 0 }}
-              transition={isExiting ? { duration: 0.3, ease: 'easeOut' } : { duration: 1.1, delay: 0.2, ease: 'easeOut' }}
-              style={{
-                marginTop: '16px',
-                color: 'rgba(245,245,247,0.44)',
-                fontFamily: '"Inter",sans-serif',
-                letterSpacing: '0.9em',
-                fontSize: '11px',
-                textShadow: '0 12px 48px rgba(0,0,0,0.75)'
-              }}
-            >
-              ARCHITECTURAL INTELLIGENCE
-            </motion.div>
-          </div>
-
-          {/* Proceed button */}
-          <AnimatePresence>
-            {showEnter && !isExiting && (
-              <div className="casa-preloader-hint-wrap absolute left-1/2 -translate-x-1/2 z-20">
-                <motion.button
-                  type="button"
-                  className="casa-preloader-hint"
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  transition={{ duration: 0.6, ease: 'easeOut' }}
-                  onClick={handleEnter}
-                >
-                  <motion.span
-                    className="casa-preloader-hint__text uppercase"
-                    animate={{ opacity: [0.55, 1, 0.55], y: [0, -2, 0] }}
-                    transition={{ duration: 2.2, ease: 'easeInOut', repeat: Infinity }}
-                  >
-                    Proceed Now
-                  </motion.span>
-                </motion.button>
-              </div>
-            )}
-          </AnimatePresence>
-
-          {/* Sofa decorative glow layer */}
-          <div className="casa-preloader-sofa-glow" />
-
-          {/* 3D sofa canvas (centered) */}
+          {/* LOCKUP */}
           <motion.div 
-            className="absolute inset-0 z-[5] pointer-events-none"
-            initial={{ opacity: 0, scale: 1.05 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1.8, delay: 0.3, ease: 'easeOut' }}
+            className="relative z-10 flex flex-col items-center"
+            style={{ 
+                opacity: logoOpacity, 
+                scale: logoScale,
+                filter: logoBlur
+            }}
           >
-            <Canvas
-              style={{ width: '100%', height: '100%', pointerEvents: 'none' }}
-              dpr={[1, 1.5]}
-              camera={{ position: [0, 0.25, 5], fov: 35, near: 0.01, far: 60 }}
-              gl={{ antialias: true, alpha: true, premultipliedAlpha: false, powerPreference: 'high-performance' }}
-              onCreated={({ gl }) => {
-                gl.setClearColor(0x000000, 0);
-                gl.toneMapping = THREE.ACESFilmicToneMapping;
-                gl.toneMappingExposure = 0.95;
-              }}
-            >
-              <Suspense fallback={null}>
-                <ExposureDriver progress01={progress01} />
-                <CinematicZoomRoute
-                  isExiting={isExiting}
-                  rigRef={rigRef}
-                  onBlackout={() => {
-                    if (readyFiredRef.current) return;
-                    readyFiredRef.current = true;
-                    onReady?.();
-                    if (setAppLoaded) setAppLoaded(true);
-                  }}
-                />
-                <SofaLoaderScene
-                  progress01={progress01}
-                  isExiting={isExiting}
-                  parallaxRef={parallaxRef}
-                  rigRef={rigRef}
-                  onArrived={() => setSofaArrived(true)}
-                />
-                <SofaPostFX enabled />
-              </Suspense>
-            </Canvas>
-          </motion.div>
-
-          {/* Minimalist dash replaces loading text + bottom progress line */}
-          {!showEnter && !isExiting && (
-            <div
-              className="absolute left-1/2 -translate-x-1/2 bottom-8 z-30 w-[min(560px,88vw)]"
-              role="progressbar"
-              aria-label="Loading"
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-valuenow={Math.round(progress)}
-            >
-              <div
-                className="flex items-center justify-between"
-                style={{
-                  fontFamily: '"Inter",sans-serif',
-                  letterSpacing: '0.42em',
-                  fontSize: '10px',
-                  color: 'rgba(245,245,247,0.62)',
-                  textShadow: '0 14px 50px rgba(0,0,0,0.85)'
-                }}
-              >
-                <span className="uppercase">Loading</span>
-                <span className="uppercase tabular-nums">{Math.round(progress)}%</span>
-              </div>
-              <div className="mt-3 h-[2px] w-full rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.10)' }}>
-                <div
-                  className="h-full"
-                  style={{
-                    width: `${progress}%`,
-                    background: 'rgba(245,245,247,0.78)',
-                    boxShadow: '0 0 18px rgba(245,245,247,0.22)',
-                    transition: 'width 120ms linear'
-                  }}
-                />
-              </div>
+            <div className="flex flex-col items-center">
+                <span className="font-display text-[clamp(2rem,6vw,4rem)] text-white tracking-[0.5em] uppercase leading-none mb-4">
+                    CASA DESIGN
+                </span>
+                <span className="font-body text-[9px] md:text-[11px] text-[#A68A64] tracking-[0.8em] uppercase opacity-80">
+                    Architectural Intelligence
+                </span>
             </div>
-          )}
-
-          {/* Lens-blur fade on enter */}
-          <motion.div
-            className="absolute inset-0 pointer-events-none"
-            initial={false}
-            animate={isExiting ? { opacity: 1, backdropFilter: 'blur(14px)' } : { opacity: 0, backdropFilter: 'blur(0px)' }}
-            transition={{ duration: 0.9, ease: 'easeInOut' }}
-            style={{ background: 'rgba(0,0,0,0.35)' }}
-          />
           </motion.div>
+
+          {/* PROGRESS INTERFACE */}
+          <div className="absolute bottom-16 left-1/2 -translate-x-1/2 w-[min(400px,80vw)] flex flex-col gap-6">
+            <AnimatePresence mode="wait">
+                {!showEnter ? (
+                    <motion.div 
+                        key="loading"
+                        className="flex flex-col gap-3"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0, y: -10 }}
+                    >
+                        <div className="flex justify-between items-end text-[10px] uppercase font-body tracking-[0.3em] text-white/40">
+                            <span>Initializing Core</span>
+                            <LoadingText progressMV={progressMV} />
+                        </div>
+                        <div className="h-0.5 w-full bg-white/5 rounded-full overflow-hidden">
+                            <motion.div 
+                                className="h-full bg-[#A68A64]" 
+                                style={{ width: progressPercentWidth }}
+                            />
+                        </div>
+                    </motion.div>
+                ) : (
+                    <motion.button
+                        key="enter"
+                        className="group relative flex flex-col items-center py-4"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, ease: "easeOut" }}
+                        onClick={handleEnter}
+                    >
+                        <span className="text-[11px] uppercase tracking-[0.6em] text-white/90 group-hover:text-white transition-colors">
+                            Enter Experience
+                        </span>
+                        <motion.div 
+                            className="mt-4 w-12 h-px bg-[#A68A64]/40 group-hover:w-24 group-hover:bg-[#A68A64] transition-all duration-700"
+                            animate={{ opacity: [0.3, 1, 0.3] }}
+                            transition={{ duration: 2, repeat: Infinity }}
+                        />
+                    </motion.button>
+                )}
+            </AnimatePresence>
+          </div>
+
+          {/* VIGNETTE */}
+          <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_50%_50%,transparent_20%,rgba(0,0,0,0.8)_100%)]" />
+
+        </motion.div>
       )}
     </AnimatePresence>
   );
 };
 
 export default Preloader;
-
-useGLTF.preload('/sofa.glb');
