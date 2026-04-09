@@ -1,6 +1,11 @@
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function readJson(req) {
+  // If the body is already parsed by a middleware (like Vercel's default), return it.
+  if (req.body && typeof req.body === 'object') {
+    return Promise.resolve(req.body);
+  }
+
   return new Promise((resolve, reject) => {
     let raw = '';
     req.on('data', (chunk) => {
@@ -19,10 +24,12 @@ function readJson(req) {
 }
 
 module.exports = async (req, res) => {
+  // CORS support
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
   if (req.method === 'OPTIONS') {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     return res.status(204).end();
   }
 
@@ -32,6 +39,9 @@ module.exports = async (req, res) => {
 
   try {
     const body = await readJson(req);
+    
+    // Debug log (Keys only to protect privacy but see what's arriving)
+    console.log('Inquiry received. Fields:', Object.keys(body).join(', '));
 
     const name = String(body?.name || '').trim();
     const email = String(body?.email || '').trim();
@@ -40,87 +50,72 @@ module.exports = async (req, res) => {
     const budgetRange = String(body?.budgetRange || '').trim();
     const timeline = String(body?.timeline || '').trim();
     const preferredContact = String(body?.preferredContact || '').trim();
-    const website = String(body?.website || '').trim(); // honeypot
+    const website = String(body?.website || body?.hp_website || '').trim(); // honeypot
 
     if (website) {
-      return res.status(200).json({ ok: true }); // silently accept bots
+      console.warn('Honeypot triggered. Silent ignore.');
+      return res.status(200).json({ ok: true, note: 'spam_filtered' });
     }
 
-    if (!name || name.length < 2 || name.length > 80) {
+    if (!name || name.length < 2) {
       return res.status(400).json({ ok: false, error: 'Please enter your name.' });
     }
-    if (!EMAIL_RE.test(email) || email.length > 160) {
+    if (!EMAIL_RE.test(email)) {
       return res.status(400).json({ ok: false, error: 'Please enter a valid email.' });
     }
-    if (!message || message.length < 10 || message.length > 5000) {
-      return res.status(400).json({ ok: false, error: 'Please enter a message (10–5000 chars).' });
+    if (!message || message.length < 10) {
+      return res.status(400).json({ ok: false, error: 'Please enter a message (at least 10 chars).' });
     }
 
-    if (projectType.length > 120) {
-      return res.status(400).json({ ok: false, error: 'Project type is too long.' });
-    }
-    if (budgetRange.length > 120) {
-      return res.status(400).json({ ok: false, error: 'Budget range is too long.' });
-    }
-    if (timeline.length > 120) {
-      return res.status(400).json({ ok: false, error: 'Timeline is too long.' });
-    }
-    if (preferredContact.length > 60) {
-      return res.status(400).json({ ok: false, error: 'Preferred contact is too long.' });
-    }
-
-    const to = (process.env.INQUIRY_TO_EMAIL || '').trim();
+    const toInput = (process.env.INQUIRY_TO_EMAIL || '').trim();
     const from = (process.env.INQUIRY_FROM_EMAIL || 'onboarding@resend.dev').trim();
     const resendKey = (process.env.RESEND_API_KEY || '').trim();
 
-    // If Resend isn't configured, still return a friendly error so the UI can guide you.
-    if (!resendKey || !to) {
+    if (!resendKey || !toInput) {
+      console.error('Email config missing: RESEND_API_KEY or INQUIRY_TO_EMAIL');
       return res.status(501).json({
         ok: false,
-        error: 'Email delivery is not configured.',
-        missing: {
-          RESEND_API_KEY: !resendKey,
-          INQUIRY_TO_EMAIL: !to
-        }
+        error: 'Email delivery is not configured on the server.',
       });
     }
 
-    const subject = `New inquiry from ${name}`;
+    // Handle multiple recipients if comma separated
+    const to = toInput.includes(',') ? toInput.split(',').map(s => s.trim()) : toInput;
+
+    const subject = `New Inquiry: ${name}`;
 
     const metaLines = [
-      projectType ? `<p style="margin:0 0 10px"><strong>Project type:</strong> ${escapeHtml(projectType)}</p>` : '',
-      budgetRange ? `<p style="margin:0 0 10px"><strong>Budget:</strong> ${escapeHtml(budgetRange)}</p>` : '',
-      timeline ? `<p style="margin:0 0 10px"><strong>Timeline:</strong> ${escapeHtml(timeline)}</p>` : '',
-      preferredContact
-        ? `<p style="margin:0 0 10px"><strong>Preferred contact:</strong> ${escapeHtml(preferredContact)}</p>`
-        : ''
-    ]
-      .filter(Boolean)
-      .join('');
+      `<p style="margin:0 0 10px"><strong>Project Type:</strong> ${escapeHtml(projectType || 'Not specified')}</p>`,
+      `<p style="margin:0 0 10px"><strong>Budget:</strong> ${escapeHtml(budgetRange || 'Not specified')}</p>`,
+      `<p style="margin:0 0 10px"><strong>Timeline:</strong> ${escapeHtml(timeline || 'Not specified')}</p>`,
+      `<p style="margin:0 0 10px"><strong>Preferred Contact:</strong> ${escapeHtml(preferredContact || 'Not specified')}</p>`
+    ].join('');
 
     const html = `
-      <div style="font-family:Inter,Arial,sans-serif;line-height:1.6">
-        <h2 style="margin:0 0 12px">New Casa Design inquiry</h2>
-        <p style="margin:0 0 10px"><strong>Name:</strong> ${escapeHtml(name)}</p>
-        <p style="margin:0 0 10px"><strong>Email:</strong> ${escapeHtml(email)}</p>
-        ${metaLines}
-        <p style="margin:16px 0 8px"><strong>Message:</strong></p>
-        <pre style="white-space:pre-wrap;background:#0b0b0b;color:#f5f5f7;padding:14px;border-radius:10px">${escapeHtml(message)}</pre>
+      <div style="font-family:Inter,Arial,sans-serif;line-height:1.6;color:#111;">
+        <h2 style="margin:0 0 20px;color:#A68A64;">CASA DESIGN Inquiry</h2>
+        <div style="background:#f9f9f9;padding:20px;border-radius:12px;border:1px solid #eee;">
+          <p style="margin:0 0 10px"><strong>Name:</strong> ${escapeHtml(name)}</p>
+          <p style="margin:0 0 10px"><strong>Email:</strong> ${escapeHtml(email)}</p>
+          <hr style="border:none;border-top:1px solid #ddd;margin:20px 0;">
+          ${metaLines}
+        </div>
+        <p style="margin:24px 0 8px"><strong>Message:</strong></p>
+        <div style="white-space:pre-wrap;background:#0b0b0b;color:#f5f5f7;padding:20px;border-radius:12px;font-size:15px;line-height:1.7;">${escapeHtml(message)}</div>
+        <p style="margin-top:20px;font-size:12px;color:#999;">Sent from the Casa Design website contact form.</p>
       </div>
     `;
 
     const metaText = [
-      projectType ? `Project type: ${projectType}` : '',
-      budgetRange ? `Budget: ${budgetRange}` : '',
-      timeline ? `Timeline: ${timeline}` : '',
-      preferredContact ? `Preferred contact: ${preferredContact}` : ''
-    ]
-      .filter(Boolean)
-      .join('\n');
+      `Project Type: ${projectType || 'Not specified'}`,
+      `Budget: ${budgetRange || 'Not specified'}`,
+      `Timeline: ${timeline || 'Not specified'}`,
+      `Preferred Contact: ${preferredContact || 'Not specified'}`
+    ].join('\n');
 
-    const text = `New Casa Design inquiry\n\nName: ${name}\nEmail: ${email}${
-      metaText ? `\n${metaText}` : ''
-    }\n\nMessage:\n${message}\n`;
+    const text = `CASA DESIGN Inquiry\n\nName: ${name}\nEmail: ${email}\n\n${metaText}\n\nMessage:\n${message}`;
+
+    console.log(`Sending email to: ${Array.isArray(to) ? to.join(', ') : to}`);
 
     const resp = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -140,15 +135,18 @@ module.exports = async (req, res) => {
 
     const data = await resp.json().catch(() => ({}));
     if (!resp.ok) {
+      console.error('Resend API error:', data);
       return res.status(502).json({
         ok: false,
-        error: data?.message || 'Failed to send email.'
+        error: data?.message || 'Failed to send email via Resend.'
       });
     }
 
+    console.log('Email sent successfully:', data.id);
     return res.status(200).json({ ok: true, id: data?.id || null });
   } catch (err) {
-    return res.status(500).json({ ok: false, error: err?.message || 'Server error' });
+    console.error('Server error in inquiry handler:', err);
+    return res.status(500).json({ ok: false, error: err?.message || 'Internal server error' });
   }
 };
 

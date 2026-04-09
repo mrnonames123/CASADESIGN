@@ -35,7 +35,7 @@ const Contact = () => {
     budgetRange: '',
     timeline: '',
     preferredContact: 'email',
-    website: ''
+    hp_website: ''
   });
   const [status, setStatus] = useState('idle'); // idle | sending | error | success | config
   const [errorMessage, setErrorMessage] = useState('');
@@ -77,7 +77,7 @@ const Contact = () => {
           budgetRange: (formData.budgetRange || '').trim(),
           timeline: (formData.timeline || '').trim(),
           preferredContact: (formData.preferredContact || '').trim(),
-          website: formData.website || ''
+          hp_website: formData.hp_website || ''
         })
       });
 
@@ -101,7 +101,7 @@ const Contact = () => {
         budgetRange: '',
         timeline: '',
         preferredContact: 'email',
-        website: ''
+        hp_website: ''
       });
     } catch (err) {
       console.error('Contact error:', err);
@@ -185,10 +185,10 @@ const Contact = () => {
                      {/* Honeypot (hidden) */}
                      <input
                        type="text"
-                       name="website"
+                       name="hp_website"
                        tabIndex={-1}
                        autoComplete="off"
-                       value={formData.website}
+                       value={formData.hp_website}
                        onChange={handleInputChange}
                        className="hidden"
                      />
