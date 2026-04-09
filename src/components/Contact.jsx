@@ -50,16 +50,26 @@ const Contact = () => {
     return false;
   }, [formData.email, formData.name, formData.project, status, step]);
 
+  const errors = useMemo(() => {
+    if (step === 1) {
+      const e = [];
+      if (formData.name.trim() && formData.name.trim().length < 2) e.push('Name too short');
+      if (formData.email.trim() && !/\S+@\S+\.\S+/.test(formData.email.trim())) e.push('Invalid email');
+      return e;
+    }
+    if (step === 2) {
+      if (formData.project.trim() && formData.project.trim().length < 2) return ['Brief too short'];
+    }
+    return [];
+  }, [formData.email, formData.name, formData.project, step]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async () => {
-    if (!canAdvance) {
-      setErrorMessage('Please add a short project brief (10+ characters).');
-      return;
-    }
+    if (!canAdvance) return;
 
     setStatus('sending');
     setErrorMessage('');
@@ -209,6 +219,11 @@ const Contact = () => {
                        className="w-full bg-transparent border-b border-white/10 py-4 font-body text-white focus:border-[#A68A64] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-casa-bronze/70"
                      />
                    </div>
+
+                   {errors.length > 0 && (
+                     <p className="text-[#A68A64] text-[9px] uppercase tracking-widest animate-pulse">{errors.join(' • ')}</p>
+                   )}
+
                    <button 
                      type="button"
                      onClick={() => {
@@ -218,7 +233,9 @@ const Contact = () => {
                      disabled={!canAdvance}
                      className="mt-4 w-full py-5 rounded-full border border-[#A68A64]/30 bg-[#A68A64]/10 text-white font-body text-[10px] uppercase tracking-[0.5em] hover:bg-[#A68A64]/30 transition-all group overflow-hidden relative disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-casa-bronze/70"
                    >
-                      <span className="relative z-10 transition-transform group-hover:tracking-[0.8em]">Next Step</span>
+                      <span className="relative z-10 transition-transform group-hover:tracking-[0.8em]">
+                        {!formData.name || !formData.email ? 'Enter Details' : errors.length ? 'Fix Errors' : 'Next Step'}
+                      </span>
                       <motion.div className="absolute inset-0 bg-[#A68A64]/20 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-700" />
                    </button>
                 </motion.div>
@@ -360,6 +377,9 @@ const Contact = () => {
                      className="w-full bg-transparent border-b border-white/10 py-4 font-body text-white focus:border-[#A68A64] transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-casa-bronze/70 resize-none"
                    />
 
+                   {errors.length > 0 && (
+                     <p className="text-[#A68A64] text-[9px] uppercase tracking-widest text-center animate-pulse">{errors.join(' • ')}</p>
+                   )}
                    {errorMessage && (
                      <p className="text-red-400 text-[9px] uppercase tracking-widest text-center">{errorMessage}</p>
                    )}
@@ -381,7 +401,7 @@ const Contact = () => {
                        className="w-full py-5 rounded-full border border-[#A68A64]/30 bg-[#A68A64]/10 text-white font-body text-[10px] uppercase tracking-[0.5em] hover:bg-[#A68A64]/30 transition-all group overflow-hidden relative disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-casa-bronze/70"
                      >
                         <span className="relative z-10 transition-transform group-hover:tracking-[0.8em]">
-                          {status === 'sending' ? 'Sending…' : 'Send Inquiry'}
+                          {status === 'sending' ? 'Sending…' : !formData.project ? 'Describe Project' : errors.length ? 'Check Length' : 'Send Inquiry'}
                         </span>
                         <motion.div className="absolute inset-0 bg-[#A68A64]/20 translate-x-[-100%] group-hover:translate-x-0 transition-transform duration-700" />
                      </button>

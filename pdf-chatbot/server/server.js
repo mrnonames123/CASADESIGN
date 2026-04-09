@@ -200,11 +200,12 @@ ${question}
 // --- CONTACT FORM HANDLER ---
 app.post("/inquiry", async (req, res) => {
   try {
-    const { name, email } = req.body
+    const { name, email, projectType, budgetRange, timeline, preferredContact } = req.body
     const project = req.body?.project ?? req.body?.message
-    const website = (req.body?.website || "").toString().trim() // honeypot
+    const hp_website = (req.body?.hp_website || req.body?.website || "").toString().trim() // honeypot
 
-    if (website) {
+    if (hp_website) {
+      console.warn("🛡️ Honeypot triggered (Bot detected).")
       return res.json({ ok: true }) // silently accept bots
     }
 
@@ -217,10 +218,7 @@ app.post("/inquiry", async (req, res) => {
       return res.status(400).json({ error: "Please enter a valid email address." })
     }
 
-    console.log("📨 NEW CONTACT INQUIRY:")
-    console.log("FROM:", name, `(${email})`)
-    console.log("PROJECT:", project)
-    console.log("-----------------------")
+    console.log("📨 NEW CONTACT INQUIRY:", { name, email, projectType, budgetRange, timeline, preferredContact })
 
     const resendKey = (process.env.RESEND_API_KEY || "").trim()
     const to = (process.env.INQUIRY_TO_EMAIL || "").trim()
@@ -238,15 +236,44 @@ app.post("/inquiry", async (req, res) => {
     }
 
     const subject = `New inquiry from ${name}`
-    const text = `New Casa Design inquiry\n\nName: ${name}\nEmail: ${email}\n\nMessage:\n${project}\n`
+    
+    const metaLines = [
+      `<b>Project Type:</b> ${escapeHtml(projectType || 'Not specified')}`,
+      `<b>Budget Range:</b> ${escapeHtml(budgetRange || 'Not specified')}`,
+      `<b>Timeline:</b> ${escapeHtml(timeline || 'Not specified')}`,
+      `<b>Preferred Contact:</b> ${escapeHtml(preferredContact || 'Not specified')}`
+    ].join('<br>')
+
+    const metaText = [
+      `Project Type: ${projectType || 'Not specified'}`,
+      `Budget Range: ${budgetRange || 'Not specified'}`,
+      `Timeline: ${timeline || 'Not specified'}`,
+      `Preferred Contact: ${preferredContact || 'Not specified'}`
+    ].join('\n')
+
+    const text = `CASA DESIGN Inquiry\n\nName: ${name}\nEmail: ${email}\n\n${metaText}\n\nMessage:\n${project}`
 
     const html = `
-      <div style="font-family:Inter,Arial,sans-serif;line-height:1.6">
-        <h2 style="margin:0 0 12px">New Casa Design inquiry</h2>
-        <p style="margin:0 0 10px"><strong>Name:</strong> ${escapeHtml(name)}</p>
-        <p style="margin:0 0 10px"><strong>Email:</strong> ${escapeHtml(email)}</p>
-        <p style="margin:16px 0 8px"><strong>Message:</strong></p>
-        <pre style="white-space:pre-wrap;background:#0b0b0b;color:#f5f5f7;padding:14px;border-radius:10px">${escapeHtml(project)}</pre>
+      <div style="font-family:Inter,Arial,sans-serif;line-height:1.6;color:#333;max-width:600px;margin:auto;border:1px solid #eee;padding:20px;border-radius:12px">
+        <h2 style="margin:0 0 20px;color:#A68A64;font-style:italic">New Casa Design Inquiry</h2>
+        <div style="background:#f9f9f9;padding:15px;border-radius:8px;margin-bottom:20px">
+          <p style="margin:0 0 10px"><strong>Name:</strong> ${escapeHtml(name)}</p>
+          <p style="margin:0"><strong>Email:</strong> ${escapeHtml(email)}</p>
+        </div>
+        
+        <div style="margin-bottom:20px">
+          <h4 style="margin:0 0 10px;text-transform:uppercase;font-size:11px;letter-spacing:1px;color:#888">Project Details</h4>
+          <p style="margin:0;font-size:14px;line-height:1.8">${metaLines}</p>
+        </div>
+
+        <div style="margin-bottom:20px">
+          <h4 style="margin:0 0 10px;text-transform:uppercase;font-size:11px;letter-spacing:1px;color:#888">Project Brief</h4>
+          <div style="background:#0b0b0b;color:#f5f5f7;padding:20px;border-radius:10px;white-space:pre-wrap;font-size:15px">${escapeHtml(project)}</div>
+        </div>
+        
+        <p style="font-size:10px;color:#aaa;margin-top:30px;border-top:1px solid #eee;padding-top:10px">
+          This inquiry was sent from the Casa Design contact form.
+        </p>
       </div>
     `
 
