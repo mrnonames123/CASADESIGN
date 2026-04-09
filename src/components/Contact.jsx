@@ -46,7 +46,7 @@ const Contact = () => {
   const canAdvance = useMemo(() => {
     if (status === 'sending') return false;
     if (step === 1) return formData.name.trim().length >= 2 && /\S+@\S+\.\S+/.test(formData.email.trim());
-    if (step === 2) return formData.project.trim().length >= 10;
+    if (step === 2) return formData.project.trim().length >= 2;
     return false;
   }, [formData.email, formData.name, formData.project, status, step]);
 
