@@ -64,17 +64,15 @@ const Preloader = ({ setAppLoaded, onReady, onExited }) => {
       const dt = Math.min(0.05, Math.max(0.001, (now - last) / 1000));
       last = now;
 
-      // Kickoff: show some movement even while the first assets haven't reported progress yet.
-      const kickoff = Math.min(15, ((now - start) / 500) * 15);
-      const target = hasRealProgressRef.current ? Math.min(99.5, real) : kickoff;
+      // Faked deterministic loading (max 2 seconds) so user is never blocked by massive 3D assets.
+      const timeElapsed = (now - start) / 1000; // seconds
+      const target = Math.min(100, (timeElapsed / 1.8) * 100);
 
       // Smoothly approach the target
-      const alpha = 1 - Math.exp(-9.0 * dt);
+      const alpha = 1 - Math.exp(-12.0 * dt);
       const desired = current + (target - current) * alpha;
 
-      const maxUpPerSec = hasRealProgressRef.current ? 60 : 25;
-      const maxStep = maxUpPerSec * dt;
-      current = Math.min(desired, current + maxStep);
+      current = desired;
 
       progressMV.set(Math.max(0, Math.min(99.5, current)));
       raf = requestAnimationFrame(tick);
@@ -88,16 +86,16 @@ const Preloader = ({ setAppLoaded, onReady, onExited }) => {
   useEffect(() => {
     if (showEnter || isExiting) return undefined;
     
-    // Auto-proceed to Enter state when assets are ready
+    // Auto-proceed to Enter state deterministically
     const checkReady = () => {
-      if (assetProgress >= 100) {
+      if (progressMV.get() >= 99) {
         setShowEnter(true);
       }
     };
 
     const interval = setInterval(checkReady, 100);
     return () => clearInterval(interval);
-  }, [assetProgress, isExiting, showEnter]);
+  }, [progressMV, isExiting, showEnter]);
 
   // LOGO VISUALS
   const logoOpacity = useTransform(progressMV, [0, 80], [0, 0.95]);

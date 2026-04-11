@@ -150,13 +150,124 @@ const LiquidAtrium = ({ texture, scrollProgressRef, scrollProgress, viewport }) 
   );
 };
 
-function HybridScene({ scrollProgressRef, scrollProgress, hasExperienced, heroTitleShown, gateMetricsRef }) {
+// Lazy-loaded Chair Model to unblock the initial Preloader and liquid background
+function ChairModel({ scrollProgressRef, scrollProgress, hasExperienced, heroTitleShown, gateMetricsRef }) {
   const { camera, viewport } = useThree();
   const { scene: gltfScene } = useGLTF('/chair.glb');
   const groupRef = useRef();
-  const envRef = useRef();
   const chairBaseYRef = useRef(-1.05);
   const chairBaseXRef = useRef(0);
+
+  const { scene } = useMemo(() => {
+    const cloned = cloneGltfScene(gltfScene);
+    sanitizeGltfMaterials(cloned);
+    enhanceMaterials(cloned);
+    return { scene: cloned };
+  }, [gltfScene]);
+
+  useEffect(() => {
+    return () => {
+      scene.traverse((node) => {
+        if (node.isMesh) {
+          node.geometry.dispose();
+          if (Array.isArray(node.material)) {
+            node.material.forEach((m) => m.dispose());
+          } else {
+            node.material.dispose();
+          }
+        }
+      });
+    };
+  }, [scene]);
+
+  const { gl } = useThree();
+
+  useEffect(() => {
+    if (scene && gl) {
+      gl.compile(scene, camera);
+    }
+  }, [gl, scene, camera]);
+
+  useFrame((state, dt) => {
+    const t = state.clock.getElapsedTime();
+    const scrollProgressValue =
+      typeof scrollProgressRef?.current === 'number'
+        ? scrollProgressRef.current
+        : (typeof scrollProgress === 'number' ? scrollProgress : 0);
+    
+    const entranceFactor = THREE.MathUtils.smoothstep(scrollProgressValue, 0, 0.08); 
+    const gate = gateMetricsRef?.current;
+    const gateProgress = gate?.progress ?? 0;
+    const gateTime = gate?.time ?? 0;
+    const inGate = (gate?.active ?? false) || (gateProgress > 0 && gateProgress < 1);
+    const chairPastEnd = gate?.pastEnd ?? false;
+
+    const isPortrait = viewport.aspect < 1;
+    const isUltraWide = viewport.aspect > 2;
+
+    if (groupRef.current) {
+      const isVisibleNow = !chairPastEnd && (inGate || scrollProgressValue < 0.1);
+      groupRef.current.visible = isVisibleNow;
+      if (!isVisibleNow) return;
+
+      const targetChairBaseY = isPortrait 
+        ? (hasExperienced ? -0.85 : heroTitleShown ? -1.15 : -0.85)
+        : (hasExperienced ? -1.25 : heroTitleShown ? -1.45 : -1.25);
+
+      chairBaseYRef.current = THREE.MathUtils.damp(chairBaseYRef.current, targetChairBaseY, 4.5, dt);
+      groupRef.current.position.y = chairBaseYRef.current + Math.sin(t * 0.75) * 0.015;
+
+      const driftStrength = inGate && gateTime >= 15 ? 0.06 : 0.03;
+      chairBaseXRef.current = THREE.MathUtils.damp(chairBaseXRef.current, 0, 4.5, dt);
+      groupRef.current.position.x = chairBaseXRef.current + Math.sin(t * 0.35) * driftStrength;
+      
+      const portraitScale = 2.45;
+      const landscapeScale = isUltraWide ? 4.2 : 3.35;
+      const maxScale = isPortrait ? portraitScale : landscapeScale;
+      const startScale = isPortrait ? 0.8 : 1.0; 
+      
+      let currentScale = maxScale;
+      if (scrollProgressValue < 0.1) {
+        currentScale = THREE.MathUtils.lerp(startScale, maxScale, entranceFactor);
+      }
+      groupRef.current.scale.setScalar(currentScale);
+      
+      const YAW_LEFT = -0.42;
+      const YAW_RIGHT = 0.42;
+      const YAW_CENTER = 0.12;
+
+      let targetYaw = YAW_CENTER;
+      if (inGate) {
+        if (gateTime < 5) {
+          targetYaw = YAW_LEFT;
+        } else if (gateTime < 7) {
+          const k = THREE.MathUtils.smoothstep(gateTime, 5, 7);
+          targetYaw = THREE.MathUtils.lerp(YAW_LEFT, YAW_RIGHT, k);
+        } else if (gateTime < 12) {
+          targetYaw = YAW_RIGHT;
+        } else if (gateTime < 15) {
+          const k = THREE.MathUtils.smoothstep(gateTime, 12, 15);
+          targetYaw = THREE.MathUtils.lerp(YAW_RIGHT, YAW_CENTER, k);
+        } else {
+          targetYaw = YAW_CENTER;
+        }
+      }
+
+      const yawSway = Math.sin(t * 0.4) * (inGate && gateTime >= 15 ? 0.05 : 0.02);
+      groupRef.current.rotation.y = THREE.MathUtils.damp(groupRef.current.rotation.y, targetYaw + yawSway, 7.0, dt);
+    }
+  });
+
+  return (
+    <group ref={groupRef} position={[0, -0.62, -2.5]}>
+      <primitive object={scene} />
+    </group>
+  );
+}
+
+function HybridScene({ scrollProgressRef, scrollProgress, hasExperienced, heroTitleShown, gateMetricsRef }) {
+  const { camera, viewport } = useThree();
+  const envRef = useRef();
   
   // PRE-LOAD the cinematic environment texture to ensure instant visibility after proceed
   const atriumTexture = useTexture('/hero-background-new.png');
@@ -205,7 +316,6 @@ function HybridScene({ scrollProgressRef, scrollProgress, hasExperienced, heroTi
   }, [gl, scene, camera]);
 
   useFrame((state, dt) => {
-    const t = state.clock.getElapsedTime();
     const scrollProgressValue =
       typeof scrollProgressRef?.current === 'number'
         ? scrollProgressRef.current
@@ -218,7 +328,6 @@ function HybridScene({ scrollProgressRef, scrollProgress, hasExperienced, heroTi
     const gateProgress = gate?.progress ?? 0;
     const gateTime = gate?.time ?? 0;
     const inGate = (gate?.active ?? false) || (gateProgress > 0 && gateProgress < 1);
-    const chairPastEnd = gate?.pastEnd ?? false;
 
     // Use gate advancement for the culmination (not global scroll) to keep it anchored
     const gateCulminationFactor = THREE.MathUtils.smoothstep(gateProgress, 0.7, 1.0);
@@ -250,7 +359,6 @@ function HybridScene({ scrollProgressRef, scrollProgress, hasExperienced, heroTi
     camera.position.z = THREE.MathUtils.damp(camera.position.z, targetZ, 3, dt);
     
     const isPortrait = viewport.aspect < 1;
-    const isUltraWide = viewport.aspect > 2;
 
     // 2. LATERAL BALANCE - Keep composition clear but reduce lateral "swim" (less confusing motion).
     const VISION_X = isPortrait ? -0.25 : -0.75;
@@ -282,64 +390,7 @@ function HybridScene({ scrollProgressRef, scrollProgress, hasExperienced, heroTi
     const targetCamY = THREE.MathUtils.lerp(0, 0.15, localCulm);
     camera.position.y = THREE.MathUtils.damp(camera.position.y, targetCamY, 7.5, dt);
 
-    if (groupRef.current) {
-      // Visibility: Only visible during intro OR while inside the narrative gate.
-      // We hide it strictly once the gate is passed or before it starts.
-      const isVisibleNow = !chairPastEnd && (inGate || scrollProgressValue < 0.1);
-      groupRef.current.visible = isVisibleNow;
-      if (!isVisibleNow) return;
 
-      // Responsive positioning: Lower on phone to leave room for title, higher on desktop for grounding
-      const targetChairBaseY = isPortrait 
-        ? (hasExperienced ? -0.85 : heroTitleShown ? -1.15 : -0.85)
-        : (hasExperienced ? -1.25 : heroTitleShown ? -1.45 : -1.25);
-
-      chairBaseYRef.current = THREE.MathUtils.damp(chairBaseYRef.current, targetChairBaseY, 4.5, dt);
-      groupRef.current.position.y = chairBaseYRef.current + Math.sin(t * 0.75) * 0.015;
-
-      // Keep subtle horizontal life, and make it stronger during "About" so it never feels like it stops.
-      const driftStrength = inGate && gateTime >= 15 ? 0.06 : 0.03;
-      chairBaseXRef.current = THREE.MathUtils.damp(chairBaseXRef.current, 0, 4.5, dt);
-      groupRef.current.position.x = chairBaseXRef.current + Math.sin(t * 0.35) * driftStrength;
-      
-      // RESPONSIVE SCALING: Tighter fit on mobile to prevent clipping
-      const portraitScale = 2.45;
-      const landscapeScale = isUltraWide ? 4.2 : 3.35;
-      const maxScale = isPortrait ? portraitScale : landscapeScale;
-      const startScale = isPortrait ? 0.8 : 1.0; 
-      
-      // Transition from material close-up into the Majestic Narrative Scale
-      let currentScale = maxScale;
-      if (scrollProgressValue < 0.1) {
-        currentScale = THREE.MathUtils.lerp(startScale, maxScale, entranceFactor);
-      }
-      groupRef.current.scale.setScalar(currentScale);
-      
-      // Face toward the active text side (left/right) and keep motion alive in the "About" stage.
-      const YAW_LEFT = -0.42;
-      const YAW_RIGHT = 0.42;
-      const YAW_CENTER = 0.12;
-
-      let targetYaw = YAW_CENTER;
-      if (inGate) {
-        if (gateTime < 5) {
-          targetYaw = YAW_LEFT;
-        } else if (gateTime < 7) {
-          const k = THREE.MathUtils.smoothstep(gateTime, 5, 7);
-          targetYaw = THREE.MathUtils.lerp(YAW_LEFT, YAW_RIGHT, k);
-        } else if (gateTime < 12) {
-          targetYaw = YAW_RIGHT;
-        } else if (gateTime < 15) {
-          const k = THREE.MathUtils.smoothstep(gateTime, 12, 15);
-          targetYaw = THREE.MathUtils.lerp(YAW_RIGHT, YAW_CENTER, k);
-        } else {
-          targetYaw = YAW_CENTER;
-        }
-      }
-
-      const yawSway = Math.sin(t * 0.4) * (inGate && gateTime >= 15 ? 0.05 : 0.02);
-      groupRef.current.rotation.y = THREE.MathUtils.damp(groupRef.current.rotation.y, targetYaw + yawSway, 7.0, dt);
-    }
 
     if (envRef.current) {
       const targetInt = THREE.MathUtils.lerp(1.25, 4.0, localCulm);
@@ -364,9 +415,15 @@ function HybridScene({ scrollProgressRef, scrollProgress, hasExperienced, heroTi
 
       <Environment ref={envRef} preset="studio" environmentIntensity={0.1} />
 
-      <group ref={groupRef} position={[0, -0.62, -2.5]}>
-        <primitive object={scene} />
-      </group>
+      <Suspense fallback={null}>
+        <ChairModel 
+          scrollProgressRef={scrollProgressRef}
+          scrollProgress={scrollProgress}
+          hasExperienced={hasExperienced}
+          heroTitleShown={heroTitleShown}
+          gateMetricsRef={gateMetricsRef}
+        />
+      </Suspense>
 
       <directionalLight intensity={1.0} position={[5, 10, 5]} color="#fff8f0" />
       <directionalLight intensity={0.4} position={[-5, 5, -5]} color="#d6e8ff" />

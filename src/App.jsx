@@ -55,12 +55,8 @@ function AppScene() {
   const [canvasMounted, setCanvasMounted] = useState(false);
 
   useEffect(() => {
-    // Now that the preloader is lightweight 2D, we can start background 
-    // loading much sooner to improve perceived speed.
-    const timer = window.setTimeout(() => {
-      setCanvasMounted(true);
-    }, 800); 
-    return () => window.clearTimeout(timer);
+    // Start canvas rendering and texture downloading immediately
+    setCanvasMounted(true);
   }, []);
 
   useEffect(() => {
