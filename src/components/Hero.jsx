@@ -90,8 +90,8 @@ const Hero = ({ animateIn = false, onExperience, hasExperienced, isAtTop = true,
     if (animateIn) {
       // Photo-first narrative: ensure the background scene is established 
       // before revealing the typography centerpiece.
-      const t1 = setTimeout(() => setShowTitle(true), 2400); 
-      const t2 = setTimeout(() => setShowAction(true), 3200);
+      const t1 = setTimeout(() => setShowTitle(true), 2200); 
+      const t2 = setTimeout(() => setShowAction(true), 2900);
       return () => {
         clearTimeout(t1);
         clearTimeout(t2);
@@ -150,38 +150,44 @@ const Hero = ({ animateIn = false, onExperience, hasExperienced, isAtTop = true,
           <div className="relative text-center px-6 -translate-y-[12vh]">
             <div className="relative z-10">
               <div className="relative z-10 flex flex-col items-center translate-y-[8vh]">
-                <h1
-                  className="casa-hero-title font-display font-medium antialiased flex flex-wrap justify-center gap-x-[0.1em] text-[clamp(4.2rem,14.5vw,10.2rem)] leading-[0.85] tracking-[-0.05em] uppercase px-4 select-none"
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={showTitle ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                  transition={{ duration: 2.2, ease: [0.16, 1, 0.3, 1] }}
                 >
-                  {/* WORD 1: CASA */}
-                  <div className="flex casa-shimmer-white">
-                    {"CASA".split("").map((char, i) => (
-                      <span
-                        key={`c-${i}`}
-                        style={{ animationDelay: `${i * 0.25}s` }}
-                        className="inline-block"
-                      >
-                        {char}
-                      </span>
-                    ))}
-                  </div>
+                  <h1
+                    className="casa-hero-title font-display font-medium antialiased flex flex-wrap justify-center gap-x-[0.1em] text-[clamp(4.2rem,14.5vw,10.2rem)] leading-[0.85] tracking-[-0.05em] uppercase px-4 select-none"
+                  >
+                    {/* WORD 1: CASA */}
+                    <div className="flex casa-shimmer-white">
+                      {"CASA".split("").map((char, i) => (
+                        <span
+                          key={`c-${i}`}
+                          style={{ animationDelay: `${i * 0.25}s` }}
+                          className="inline-block"
+                        >
+                          {char}
+                        </span>
+                      ))}
+                    </div>
 
-                  {/* SPACING */}
-                  <div className="w-[0.2em]" />
+                    {/* SPACING */}
+                    <div className="w-[0.2em]" />
 
-                  {/* WORD 2: DESIGN (ITALIC) */}
-                  <div className="flex casa-shimmer-bronze">
-                    {"DESIGN".split("").map((char, i) => (
-                      <span
-                        key={`d-${i}`}
-                        style={{ animationDelay: `${1.2 + (i * 0.25)}s` }}
-                        className="italic font-light inline-block"
-                      >
-                        {char}
-                      </span>
-                    ))}
-                  </div>
-                </h1>
+                    {/* WORD 2: DESIGN (ITALIC) */}
+                    <div className="flex casa-shimmer-bronze">
+                      {"DESIGN".split("").map((char, i) => (
+                        <span
+                          key={`d-${i}`}
+                          style={{ animationDelay: `${1.2 + (i * 0.25)}s` }}
+                          className="italic font-light inline-block"
+                        >
+                          {char}
+                        </span>
+                      ))}
+                    </div>
+                  </h1>
+                </motion.div>
               </div>
             </div>
           </div>

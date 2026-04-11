@@ -135,7 +135,8 @@ const LiquidAtrium = ({ texture, scrollProgressRef, scrollProgress, viewport }) 
         ? scrollProgressRef.current
         : (typeof scrollProgress === 'number' ? scrollProgress : 0);
 
-    const targetWarp = THREE.MathUtils.smoothstep(progressValue, 0.02, 0.08);
+    // Extend the background image visibility to cover the initial narrative jump
+    const targetWarp = THREE.MathUtils.smoothstep(progressValue, 0.06, 0.18);
     mat.uniforms.uWarp.value = THREE.MathUtils.damp(mat.uniforms.uWarp.value, targetWarp, 7.5, dt);
     
     // Visibility kill for total darkness
@@ -206,7 +207,9 @@ function ChairModel({ scrollProgressRef, scrollProgress, hasExperienced, heroTit
     const isUltraWide = viewport.aspect > 2;
 
     if (groupRef.current) {
-      const isVisibleNow = !chairPastEnd && (inGate || scrollProgressValue < 0.1);
+      // Persistent Visibility: Keep the chair visible during the transition from Hero to Studio.
+      // We only hide it if we have scrolled past the entire Red Carpet experience.
+      const isVisibleNow = !chairPastEnd;
       groupRef.current.visible = isVisibleNow;
       if (!isVisibleNow) return;
 

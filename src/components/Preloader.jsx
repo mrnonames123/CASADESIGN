@@ -19,6 +19,13 @@ const Preloader = ({ setAppLoaded, onReady, onExited }) => {
   const [showEnter, setShowEnter] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [isExiting, setIsExiting] = useState(false);
+  const [bgImageLoaded, setBgImageLoaded] = useState(false);
+
+  useEffect(() => {
+    const img = new Image();
+    img.src = '/hero-background-new.png';
+    img.onload = () => setBgImageLoaded(true);
+  }, []);
   
   // PARALLAX MOUSE TRACKING
   const mouseX = useMotionValue(0);
@@ -103,14 +110,15 @@ const Preloader = ({ setAppLoaded, onReady, onExited }) => {
     
     // Auto-proceed to Enter state deterministically
     const checkReady = () => {
-      if (progressMV.get() >= 99) {
+      // REQUIRE BOTH: Progress calculation AND the secondary hero background check
+      if (progressMV.get() >= 99 && bgImageLoaded) {
         setShowEnter(true);
       }
     };
 
     const interval = setInterval(checkReady, 100);
     return () => clearInterval(interval);
-  }, [progressMV, isExiting, showEnter]);
+  }, [progressMV, isExiting, showEnter, bgImageLoaded]);
 
   // LOGO VISUALS
   const logoOpacity = useTransform(progressMV, [0, 80], [0, 0.95]);
@@ -164,14 +172,44 @@ const Preloader = ({ setAppLoaded, onReady, onExited }) => {
     <AnimatePresence onExitComplete={() => onExited?.()}>
       {isVisible && (
         <motion.div
-          className="fixed inset-0 z-[50000] flex flex-col items-center justify-center overflow-hidden bg-[#050505] select-none"
-          initial={{ opacity: 1 }}
-          animate={{ opacity: 1 }}
-          exit={{ 
-            opacity: 0,
-            transition: { duration: 1.2, ease: [0.77, 0, 0.175, 1] } 
-          }}
+          className="fixed inset-0 z-[50000] overflow-hidden select-none pointer-events-none"
+          initial="initial"
+          animate="animate"
+          exit="exit"
         >
+          {/* CURTAIN PANELS (Left & Right) */}
+          <motion.div 
+            className="absolute top-0 left-0 w-1/2 h-full bg-[#050505] z-[1] will-change-transform"
+            variants={{
+              initial: { x: 0 },
+              exit: { 
+                x: '-100%',
+                transition: { duration: 1.4, ease: [0.77, 0, 0.175, 1] }
+              }
+            }}
+          />
+          <motion.div 
+            className="absolute top-0 right-0 w-1/2 h-full bg-[#050505] z-[1] will-change-transform"
+            variants={{
+              initial: { x: 0 },
+              exit: { 
+                x: '100%',
+                transition: { duration: 1.4, ease: [0.77, 0, 0.175, 1] }
+              }
+            }}
+          />
+
+          {/* MAIN CONTENT WRAPPER (Fades out while curtains open) */}
+          <motion.div 
+            className="absolute inset-0 z-[2] flex flex-col items-center justify-center pointer-events-auto"
+            variants={{
+              initial: { opacity: 1 },
+              exit: { 
+                opacity: 0,
+                transition: { duration: 0.8, ease: "easeOut" }
+              }
+            }}
+          >
           {/* ATMOSPHERIC BACKGROUND (Architectural intelligence HUD) */}
           <div className="absolute inset-0 bg-[#060606]" />
           
@@ -417,6 +455,7 @@ const Preloader = ({ setAppLoaded, onReady, onExited }) => {
           />
 
         </motion.div>
+      </motion.div>
       )}
     </AnimatePresence>
   );
