@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AnimatePresence, motion, useMotionValue, useTransform } from 'framer-motion';
+import { AnimatePresence, motion, useMotionValue, useTransform, useSpring } from 'framer-motion';
 import { useProgress } from '@react-three/drei';
 
 // Fine-grained local updater for loading text to avoid parent re-renders
@@ -110,6 +110,15 @@ const Preloader = ({ setAppLoaded, onReady, onExited }) => {
   // DECORATIVE MOTION
   const particlesX = useTransform(springX, (v) => v * -1.5);
   const particlesY = useTransform(springY, (v) => v * -1.5);
+  
+  const bgX = useTransform(springX, (v) => v * 0.8);
+  const bgY = useTransform(springY, (v) => v * 0.8);
+  
+  const gridX = useTransform(springX, v => v * 0.2);
+  const gridY = useTransform(springY, v => v * 0.2);
+  
+  const cornerX = useTransform(springX, v => v * 0.5);
+  const cornerY = useTransform(springY, v => v * 0.5);
 
   const handleEnter = useCallback(() => {
     if (isExiting) return;
@@ -156,8 +165,8 @@ const Preloader = ({ setAppLoaded, onReady, onExited }) => {
             className="absolute inset-0"
             style={{
               background: 'radial-gradient(circle at 50% 50%, rgba(166, 138, 100, 0.08) 0%, transparent 65%)',
-              x: useTransform(springX, (v) => v * 0.8),
-              y: useTransform(springY, (v) => v * 0.8)
+              x: bgX,
+              y: bgY
             }}
           />
 
@@ -191,7 +200,7 @@ const Preloader = ({ setAppLoaded, onReady, onExited }) => {
           {/* EDITORIAL GRID LINES (Slight Parallax) */}
           <motion.div 
             className="absolute inset-0 pointer-events-none opacity-[0.06]"
-            style={{ x: useTransform(springX, v => v * 0.2), y: useTransform(springY, v => v * 0.2) }}
+            style={{ x: gridX, y: gridY }}
           >
             <div className="absolute top-1/2 left-0 right-0 h-px bg-white/40" />
             <div className="absolute left-1/2 top-0 bottom-0 w-px bg-white/40" />
@@ -211,7 +220,7 @@ const Preloader = ({ setAppLoaded, onReady, onExited }) => {
             <motion.div 
                 key={pos} 
                 className={`absolute ${pos} w-14 h-14 opacity-30`}
-                style={{ x: useTransform(springX, v => v * 0.5), y: useTransform(springY, v => v * 0.5) }}
+                style={{ x: cornerX, y: cornerY }}
             >
               <div className="absolute top-0 left-0 w-full h-px bg-white" />
               <div className="absolute top-0 left-0 h-full w-px bg-white" />
