@@ -95,7 +95,7 @@ function ChairPostFX({ enabled }) {
 function ChairModel({ active }) {
   const groupRef = useRef(null);
   const parallaxRef = useRef({ x: 0, y: 0 });
-  const { scene: gltfScene, animations } = useGLTF('/chair.glb');
+  const { scene: gltfScene, animations } = useGLTF('/chair-v1.glb');
 
   const scene = useMemo(() => {
     const cloned = cloneGltfScene(gltfScene);
@@ -288,4 +288,4 @@ const ChairCanvas = ({ active }) => {
 
 export default ChairCanvas;
 
-useGLTF.preload('/chair.glb');
+useGLTF.preload('/chair-v1.glb');

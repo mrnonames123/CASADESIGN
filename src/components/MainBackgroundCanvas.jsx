@@ -153,7 +153,7 @@ const LiquidAtrium = ({ texture, scrollProgressRef, scrollProgress, viewport }) 
 // Lazy-loaded Chair Model to unblock the initial Preloader and liquid background
 function ChairModel({ scrollProgressRef, scrollProgress, hasExperienced, heroTitleShown, gateMetricsRef }) {
   const { camera, viewport } = useThree();
-  const { scene: gltfScene } = useGLTF('/chair.glb');
+  const { scene: gltfScene } = useGLTF('/chair-v1.glb');
   const groupRef = useRef();
   const chairBaseYRef = useRef(-1.05);
   const chairBaseXRef = useRef(0);
@@ -281,39 +281,7 @@ function HybridScene({ scrollProgressRef, scrollProgress, hasExperienced, heroTi
     }
   }, [atriumTexture]);
 
-  const { scene } = useMemo(() => {
-    const cloned = cloneGltfScene(gltfScene);
-    sanitizeGltfMaterials(cloned);
-    enhanceMaterials(cloned);
-    return { scene: cloned };
-  }, [gltfScene]);
-
-  // PRODUCTION HARDENING: Automatic disposal of scene resources to prevent context loss
-  useEffect(() => {
-    return () => {
-      scene.traverse((node) => {
-        if (node.isMesh) {
-          node.geometry.dispose();
-          if (Array.isArray(node.material)) {
-            node.material.forEach((m) => m.dispose());
-          } else {
-            node.material.dispose();
-          }
-        }
-      });
-    };
-  }, [scene]);
-
   const { gl } = useThree();
-
-  // GPU PRE-WARMER: Compile shaders early (during preloader) to avoid stutter on first reveal
-  useEffect(() => {
-    if (scene && gl) {
-      gl.compile(scene, camera);
-      // Log for diagnostic confirmation
-      console.log("WebGL Lifecycle: SCENE_OPTIMIZED_AND_PREWARMED");
-    }
-  }, [gl, scene, camera]);
 
   useFrame((state, dt) => {
     const scrollProgressValue =

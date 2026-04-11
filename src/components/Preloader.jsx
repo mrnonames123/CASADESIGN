@@ -29,6 +29,21 @@ const Preloader = ({ setAppLoaded, onReady, onExited }) => {
   const assetProgressRef = useRef(assetProgress);
   const hasRealProgressRef = useRef(false);
   const readyFiredRef = useRef(false);
+  const [statusText, setStatusText] = useState("Synchronizing");
+
+  const statusMessages = [
+    "Synthesizing Atmosphere",
+    "Calibrating Architectural Nodes",
+    "Optimizing Light Throughput",
+    "Finalizing Narrative Canvas"
+  ];
+
+  useEffect(() => {
+    return progressMV.on('change', (v) => {
+        const index = Math.min(statusMessages.length - 1, Math.floor((v / 100) * statusMessages.length));
+        setStatusText(statusMessages[index]);
+    });
+  }, [progressMV]);
 
   useEffect(() => {
     const handleMove = (e) => {
@@ -157,20 +172,84 @@ const Preloader = ({ setAppLoaded, onReady, onExited }) => {
             transition: { duration: 1.2, ease: [0.77, 0, 0.175, 1] } 
           }}
         >
-          {/* STUDIO NOIR BACKGROUND WITH DYNAMIC GLOW */}
-          <div className="absolute inset-0 bg-black" />
+          {/* ATMOSPHERIC BACKGROUND (Architectural intelligence HUD) */}
+          <div className="absolute inset-0 bg-[#060606]" />
+          
+          {/* GIANT EDITORIAL BACKDROP TEXT */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
+            <motion.span 
+              className="font-display text-[35vw] text-white/[0.02] leading-none tracking-[-0.05em] uppercase italic"
+              style={{ x: bgX, y: bgY }}
+            >
+              CASA
+            </motion.span>
+          </div>
+
+          {/* DRIFTING ARCHITECTURAL BLOCKS (Floor Plan vibe) */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
+            {[...Array(4)].map((_, i) => (
+                <motion.div
+                    key={i}
+                    className="absolute border border-white/10 bg-white/[0.01]"
+                    style={{
+                        width: Math.random() * 400 + 200 + 'px',
+                        height: Math.random() * 200 + 100 + 'px',
+                        left: (i * 25) + '%',
+                        top: (i * 20) + '%',
+                        rotate: (i * 15) + 'deg',
+                        x: bgX,
+                        y: bgY
+                    }}
+                    animate={{ 
+                        opacity: [0.3, 0.6, 0.3],
+                        scale: [0.95, 1.05, 0.95]
+                    }}
+                    transition={{ duration: 10 + i, repeat: Infinity, ease: "linear" }}
+                />
+            ))}
+          </div>
+          
+          {/* STUDIO NOIR GLOW */}
           <motion.div 
             className="absolute inset-0"
             style={{
-              background: 'radial-gradient(circle at 50% 50%, rgba(166, 138, 100, 0.08) 0%, transparent 65%)',
+              background: 'radial-gradient(circle at 50% 45%, rgba(166, 138, 100, 0.12) 0%, transparent 75%)',
               x: bgX,
               y: bgY
             }}
           />
 
+          {/* TECHNICAL HUD CALLOUTS */}
+          <div className="absolute inset-0 pointer-events-none p-12 overflow-hidden flex flex-col justify-between opacity-40">
+            <div className="flex justify-between items-start">
+                <div className="flex flex-col gap-2 font-mono text-[8px] text-[#A68A64] tracking-[0.3em] uppercase">
+                    <span>SYS_INIT // BOOT_SEQ-01</span>
+                    <span className="text-white/30">L_LAT: 42.102 / R_LAT: 12.004</span>
+                </div>
+                <div className="flex flex-col items-end gap-2 font-mono text-[8px] text-white/30 tracking-[0.3em] uppercase text-right">
+                    <span>ST-ARTISAN_v3.2</span>
+                    <div className="w-24 h-[1px] bg-white/10" />
+                </div>
+            </div>
+            <div className="flex justify-between items-end">
+                <div className="flex flex-col gap-2 font-mono text-[8px] text-white/30 tracking-[0.3em] uppercase">
+                    <div className="flex gap-4">
+                        <span className="text-white/60">PR_MODE: CINEMATIC</span>
+                        <span>BUF: 1024_MB</span>
+                    </div>
+                </div>
+                <div className="font-mono text-[8px] text-[#A68A64] tracking-[0.3em] uppercase">
+                    CASA_AI // ARCH_SILENCE
+                </div>
+            </div>
+          </div>
+
+          {/* VIGNETTE (INTENSIFIED) */}
+          <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_50%_50%,transparent_0%,rgba(0,0,0,0.85)_100%)]" />
+
           {/* NOISE OVERLAY */}
           <div
-            className="absolute inset-0 pointer-events-none opacity-[0.04] mix-blend-overlay"
+            className="absolute inset-0 pointer-events-none opacity-[0.06] mix-blend-overlay"
             style={{
               backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
               animation: 'casa-noise-drift 18s linear infinite both alternate'
@@ -179,17 +258,18 @@ const Preloader = ({ setAppLoaded, onReady, onExited }) => {
 
           {/* ATMOSPHERIC BOKEH (Floating Dust Particles) */}
           <motion.div className="absolute inset-0 pointer-events-none" style={{ x: particlesX, y: particlesY }}>
-             {[...Array(22)].map((_, i) => (
+             {[...Array(35)].map((_, i) => (
                 <div 
                     key={i}
                     className="absolute bg-white/20 rounded-full blur-[2px]"
                     style={{
-                        width: Math.random() * 3 + 1 + 'px',
-                        height: Math.random() * 3 + 1 + 'px',
+                        width: Math.random() * 4 + 1 + 'px',
+                        height: Math.random() * 4 + 1 + 'px',
                         left: Math.random() * 100 + '%',
                         top: Math.random() * 100 + '%',
-                        opacity: Math.random() * 0.3 + 0.1,
-                        animation: `casa-float ${Math.random() * 20 + 20}s linear infinite`
+                        opacity: Math.random() * 0.4 + 0.1,
+                        animation: `casa-float ${Math.random() * 20 + 20}s linear infinite`,
+                        animationDelay: `-${Math.random() * 20}s`
                     }}
                 />
              ))}
@@ -237,9 +317,16 @@ const Preloader = ({ setAppLoaded, onReady, onExited }) => {
             }}
           >
             <div className="flex flex-col items-center text-center">
-                <h1 className="flex items-baseline gap-x-[0.2em] font-display text-[clamp(2.4rem,7vw,4.8rem)] tracking-[-0.03em] leading-none mb-6">
+                <h1 className="flex items-baseline gap-x-[0.2em] font-display text-[clamp(2.4rem,7vw,4.8rem)] tracking-[-0.03em] leading-none mb-6 group">
                     <span className="text-white uppercase casa-shimmer-white">CASA</span>
                     <span className="italic font-light text-[#A68A64] casa-shimmer-bronze">DESIGN</span>
+                    
+                    {/* Vertical Scanlight Pulse */}
+                    <motion.div 
+                        className="absolute inset-0 w-1/4 h-full bg-gradient-to-r from-transparent via-white/10 to-transparent -skew-x-12"
+                        animate={{ left: ['-100%', '200%'] }}
+                        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", repeatDelay: 1 }}
+                    />
                 </h1>
                 <div className="relative flex flex-col items-center">
                     <span className="font-body text-[10px] md:text-[12px] text-white/40 tracking-[1.1em] uppercase ml-[1.1em]">
@@ -274,7 +361,7 @@ const Preloader = ({ setAppLoaded, onReady, onExited }) => {
                                     animate={{ opacity: [0.3, 1, 0.3] }}
                                     transition={{ duration: 1.5, repeat: Infinity }}
                                 />
-                                Synchronizing
+                                {statusText}
                             </span>
                             <LoadingText progressMV={progressMV} />
                         </div>
@@ -318,8 +405,7 @@ const Preloader = ({ setAppLoaded, onReady, onExited }) => {
             </AnimatePresence>
           </div>
 
-          {/* VIGNETTE & LIGHT LEAK */}
-          <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_50%_45%,transparent_20%,rgba(0,0,0,0.85)_100%)]" />
+
           <motion.div 
             className="absolute -top-1/4 -left-1/4 w-full h-full bg-[#A68A64]/5 blur-[120px] rounded-full pointer-events-none"
             animate={{ 

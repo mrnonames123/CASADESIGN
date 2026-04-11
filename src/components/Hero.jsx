@@ -90,8 +90,8 @@ const Hero = ({ animateIn = false, onExperience, hasExperienced, isAtTop = true,
     if (animateIn) {
       // Photo-first narrative: ensure the background scene is established 
       // before revealing the typography centerpiece.
-      const t1 = setTimeout(() => setShowTitle(true), 1100); 
-      const t2 = setTimeout(() => setShowAction(true), 1800);
+      const t1 = setTimeout(() => setShowTitle(true), 2400); 
+      const t2 = setTimeout(() => setShowAction(true), 3200);
       return () => {
         clearTimeout(t1);
         clearTimeout(t2);
