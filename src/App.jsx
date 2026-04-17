@@ -27,10 +27,15 @@ const AIChatbot = React.lazy(() => import('./components/AIChatbot'));
 import AboutPage from './pages/AboutPage';
 import SideHUDNavigator from './components/SideHUDNavigator';
 
+import { isTouchDevice, isMobile } from './utils/device';
+
 gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
+
 // 120FPS Performance Path: High-priority ticker synchronization
-gsap.ticker.fps(120);
-gsap.ticker.lagSmoothing(500, 33); // Restored standard smoothing to handle parsing spikes gracefully
+// Optimized: Use standard 60fps on mobile to reduce CPU/GPU pressure
+const targetFPS = isTouchDevice() ? 60 : 120;
+gsap.ticker.fps(targetFPS);
+gsap.ticker.lagSmoothing(500, 33);
 
 function AppScene() {
   const containerRef = useRef(null);
@@ -127,14 +132,16 @@ function AppScene() {
       ((window.matchMedia && window.matchMedia('(pointer: coarse)').matches) ||
         navigator.maxTouchPoints > 0);
 
+    const touch = isTouchDevice();
     const lenis = new Lenis({
       // 120FPS Optimization: Increased responsiveness for high-refresh displays
-      lerp: prefersReducedMotion ? 1 : (isTouchDevice ? 0.20 : 0.125),
+      // SNAPPY MOBILE: Higher lerp value for touch means less 'heavy' scrolling (closer to 1.0 is more direct)
+      lerp: prefersReducedMotion ? 1 : (touch ? 0.24 : 0.125),
       syncTouch: false,
       wheelMultiplier: 1.0,
-      touchMultiplier: 1.02,
+      touchMultiplier: 1.5, // Increased for a more effortless feel on mobile
       smoothWheel: !prefersReducedMotion,
-      smoothTouch: !prefersReducedMotion && isTouchDevice,
+      smoothTouch: !prefersReducedMotion && touch,
       infinite: false,
     });
 
@@ -151,8 +158,17 @@ function AppScene() {
       if (!scrollRafRef.current) {
         scrollRafRef.current = window.requestAnimationFrame(() => {
           scrollRafRef.current = 0;
-          setScrollProgress(scrollProgressRef.current);
-          setScrollY(scrollYRef.current);
+          
+          // Optimization: Only trigger React state updates for significant changes (0.1%)
+          // to skip redundant re-renders for sub-pixel micro-movements on mobile screens.
+          setScrollProgress(prev => {
+            const current = scrollProgressRef.current;
+            if (Math.abs(current - prev) > 0.001) {
+              setScrollY(scrollYRef.current);
+              return current;
+            }
+            return prev;
+          });
         });
       }
 
