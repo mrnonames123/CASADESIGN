@@ -43,12 +43,12 @@ const ArchivalSeries = () => {
       {/* ELITE OBSIDIAN BG */}
       <motion.div 
         style={{ y: bgY }}
-        className="absolute inset-0 pointer-events-none opacity-[0.2]"
+        className="absolute inset-0 pointer-events-none opacity-[0.25]"
       >
         <img 
-          src="/portfolio-bg.png" 
+          src="/portfolio_background_obsidian_1776476923285.png" 
           alt="" 
-          className="w-full h-full object-cover grayscale-[0.4] brightness-50"
+          className="w-full h-full object-cover grayscale-[0.2] brightness-75"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-[#050505] via-transparent to-[#050505]" />
       </motion.div>
@@ -57,6 +57,8 @@ const ArchivalSeries = () => {
         <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-10 mb-28 pb-16 border-b border-white/5">
           <div className="flex flex-col gap-6">
             <div className="flex items-center gap-4">
+               <div className="w-12 h-[1px] bg-[#A68A64]/40" />
+               <span className="font-body text-[#A68A64] tracking-[0.5em] uppercase text-[9px] font-bold">Archival Portfolio</span>
             </div>
             <h2 className="text-white font-display text-[clamp(2.8rem,9vw,5.5rem)] leading-[0.85] tracking-[-0.04em]">
                Restricted <br /> <span className="italic text-[#A68A64]">Case</span> Studies.
@@ -80,7 +82,7 @@ const ArchivalSeries = () => {
              className="lg:col-span-7 lg:row-span-2 relative overflow-hidden rounded-[50px] border border-white/5 bg-[#121212]"
           >
              <AutoColorImage
-               src="/portfolio-1.png"
+               src="/portfolio_atrium_1776476848352.png"
                className="absolute inset-0 w-full h-full object-cover transition-all duration-[1400ms] ease-out"
                initialClassName="grayscale-[0.35] brightness-75 scale-[1.02]"
                activeClassName="grayscale-0 brightness-100 scale-105"
@@ -93,7 +95,7 @@ const ArchivalSeries = () => {
                 </span>
                 <h3 className="text-white font-display text-5xl md:text-7xl italic leading-tight tracking-[-0.02em]">The Living <span className="not-italic text-white/40">Atrium.</span></h3>
                 <p className="text-white/30 font-body text-[11px] uppercase tracking-[0.3em] mt-8 leading-relaxed">
-                  A multi-layered spatial experiment in warmth and architectural silence.
+                   A multi-layered spatial experiment in warmth and architectural silence.
                 </p>
              </div>
           </motion.div>
@@ -106,7 +108,7 @@ const ArchivalSeries = () => {
              className="lg:col-span-5 relative overflow-hidden rounded-[40px] border border-white/5 bg-[#121212]"
           >
              <AutoColorImage
-               src="/portfolio-2.png"
+               src="/portfolio_master_suite_1776476864145.png"
                className="absolute inset-0 w-full h-full object-cover transition-all duration-[1200ms] ease-out"
                initialClassName="grayscale-[0.45] brightness-75 scale-[1.02]"
                activeClassName="grayscale-0 brightness-100 scale-105"
@@ -128,7 +130,7 @@ const ArchivalSeries = () => {
           >
              <div className="relative overflow-hidden rounded-[30px] border border-white/5 h-[450px] md:h-[350px]">
                 <AutoColorImage
-                  src="/portfolio-3.png"
+                  src="/portfolio_material_detail_1_1776476879916.png"
                   className="w-full h-full object-cover transition-all duration-[1200ms] ease-out"
                   initialClassName="grayscale-[0.55] brightness-75"
                   activeClassName="grayscale-0 brightness-100"
@@ -138,7 +140,7 @@ const ArchivalSeries = () => {
              </div>
              <div className="relative overflow-hidden rounded-[30px] border border-white/5 h-[450px] md:h-[350px]">
                 <AutoColorImage
-                  src="/portfolio-4.png"
+                  src="/portfolio_lighting_detail_1_1776476900706.png"
                   className="w-full h-full object-cover transition-all duration-[1200ms] ease-out"
                   initialClassName="grayscale-[0.55] brightness-75"
                   activeClassName="grayscale-0 brightness-100"

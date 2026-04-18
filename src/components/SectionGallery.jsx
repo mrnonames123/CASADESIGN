@@ -12,12 +12,12 @@ const SectionGallery = () => {
   const { transitionToSection } = useNavigation();
 
   const galleryImages = [
-    "/gallery-1.webp",
-    "/gallery-2.webp",
-    "/gallery-3.webp",
-    "/gallery-4.webp",
-    "/gallery-5.png",
-    "/gallery-6.png",
+    "/gallery_sculpture_1776476980928.png",
+    "/gallery_facade_detail_1776477004391.png",
+    "/gallery_interior_light_play_1776477025710.png",
+    "/gallery_furniture_minimalist_1776477045871.png",
+    "/gallery_brutalist_dusk_1776477066941.png",
+    "/gallery_doorway_glow_1776477086605.png",
   ];
 
   useGSAP(() => {

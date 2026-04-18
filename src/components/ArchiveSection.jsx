@@ -102,46 +102,41 @@ const ArchiveSection = () => {
             initial={{ opacity: 0, scale: 0.9, rotateY: 15 }}
             whileInView={{ opacity: 1, scale: 1, rotateY: 0 }}
             style={{ 
-              rotateX: mousePos.y * 12, 
-              rotateY: mousePos.x * 12, 
+              rotateX: mousePos.y * 8, // Reduced slightly for better control
+              rotateY: mousePos.x * 8, 
               transformStyle: 'preserve-3d' 
             }}
             transition={{ duration: 2.2, ease: [0.16, 1, 0.3, 1], rotateX: { duration: 0.2 }, rotateY: { duration: 0.2 } }}
             viewport={{ once: true, amount: 0.3 }}
-            className="relative aspect-[4/5] lg:aspect-[1.6/1] w-full overflow-hidden border border-white/5 bg-black/40 backdrop-blur-3xl shadow-[0_60px_120px_-30px_rgba(0,0,0,1)] ring-1 ring-white/10"
+            className="relative aspect-[4/5] lg:aspect-[2/1] w-full overflow-hidden border border-white/10 bg-black/60 shadow-[0_80px_160px_-40px_rgba(0,0,0,1)] ring-1 ring-white/10"
           >
-            <div className="absolute inset-0 z-20 pointer-events-none p-6 border-double border-4 border-white/[0.02]" />
-            <div className="absolute top-0 right-0 p-8 text-[7px] font-mono text-[#A68A64]/40 flex flex-col items-end gap-1 z-20">
-            </div>
+            {/* TECHNICAL VENEER */}
+            <div className="absolute inset-0 z-20 pointer-events-none p-6 border-double border-[1px] border-white/5 opacity-40" />
             
-            <div className="absolute inset-4 z-10 p-4 border border-white/5 overflow-hidden" style={{ transform: 'translateZ(20px)' }}>
+            <div className="absolute inset-0 z-10 overflow-hidden" style={{ transform: 'translateZ(10px)' }}>
               <img 
-                src="/sofa-blueprint.png"
-                alt="Architectural Blueprint"
-                className="w-full h-full object-contain opacity-50 grayscale invert brightness-200 transition-all duration-1000 group-hover:scale-105 group-hover:opacity-90 mix-blend-screen"
-                style={{ filter: `hue-rotate(0deg) brightness(1.2) drop-shadow(0 0 15px rgba(166,138,100,0.2))` }}
+                src="/sculpted_evolution_blueprint_1776476828222.png" 
+                alt="Architectural Blueprint Analysis"
+                className="w-full h-full object-cover opacity-60 transition-all duration-1400 ease-out group-hover:scale-105 group-hover:opacity-85 mix-blend-screen brightness-125"
               />
 
               <motion.div 
-                className="absolute inset-0 z-40 pointer-events-none bg-gradient-to-r from-transparent via-[#A68A64]/10 to-transparent skew-x-12"
-                animate={{ x: mousePos.x * 200 }}
-                transition={{ type: 'spring', damping: 20 }}
+                className="absolute inset-0 z-40 pointer-events-none bg-gradient-to-r from-transparent via-[#A68A64]/5 to-transparent skew-x-12"
+                animate={{ x: mousePos.x * 150 }}
+                transition={{ type: 'spring', damping: 25 }}
               />
 
               <div className="absolute inset-0 z-30 pointer-events-none overflow-hidden mix-blend-screen">
-                <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#A68A64]/80 to-transparent shadow-[0_0_20px_rgba(166,138,100,0.8)] animate-laser-scroll" />
+                <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#A68A64]/60 to-transparent shadow-[0_0_25px_rgba(166,138,100,0.4)] animate-laser-scroll" />
               </div>
             </div>
             
             <div className="absolute inset-0 z-50 pointer-events-none" style={{ transformStyle: 'preserve-3d' }}>
-              <DataMarker pos={{ top: '22%', left: '35%' }} label="Shell_Pivot_01" delay={0} mousePos={mousePos} />
-              <DataMarker pos={{ bottom: '30%', right: '28%' }} label="Support_Axis_X" delay={2} mousePos={mousePos} />
+              <DataMarker pos={{ top: '35%', left: '25%' }} label="Structural_Pivot_X1" delay={0} mousePos={mousePos} />
+              <DataMarker pos={{ bottom: '25%', right: '35%' }} label="Ergonomic_Curvature_B" delay={1.5} mousePos={mousePos} />
             </div>
 
-            <div className="absolute bottom-6 left-8 text-[8px] font-mono text-white/15 uppercase tracking-[0.5em] z-20">
-            </div>
-            
-            <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,transparent_40%,rgba(0,0,0,0.8)_100%)] z-15" />
+            <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,transparent_20%,rgba(0,0,0,0.85)_100%)] z-15" />
           </motion.div>
         </div>
       </div>
