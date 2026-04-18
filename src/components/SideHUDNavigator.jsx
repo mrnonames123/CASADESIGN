@@ -149,4 +149,4 @@ const SideHUDNavigator = ({ activeSection: activeSectionProp, scrollProgress }) 
   );
 };
 
-export default React.memo(SideHUDNavigator);
+export default SideHUDNavigator;

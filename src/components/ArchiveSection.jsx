@@ -1,15 +1,11 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { isTouchDevice } from '../utils/device';
 
 const ArchiveSection = () => {
   const sectionRef = useRef(null);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const isTouch = React.useMemo(() => isTouchDevice(), []);
 
   useEffect(() => {
-    if (isTouch) return;
-
     const handleMouseMove = (e) => {
       if (!sectionRef.current) return;
       const rect = sectionRef.current.getBoundingClientRect();
@@ -19,7 +15,7 @@ const ArchiveSection = () => {
     };
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, [isTouch]);
+  }, []);
 
   return (
     <section 

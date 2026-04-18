@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useMotionValue, useTransform, useSpring } from 'framer-motion';
 import { useProgress } from '@react-three/drei';
-import { isTouchDevice } from '../utils/device';
 
 // Fine-grained local updater for loading text to avoid parent re-renders
 const LoadingText = ({ progressMV }) => {
@@ -21,7 +20,6 @@ const Preloader = ({ setAppLoaded, onReady, onExited }) => {
   const [isVisible, setIsVisible] = useState(true);
   const [isExiting, setIsExiting] = useState(false);
   const [bgImageLoaded, setBgImageLoaded] = useState(false);
-  const isTouch = useMemo(() => isTouchDevice(), []);
 
   useEffect(() => {
     const img = new Image();
@@ -55,8 +53,6 @@ const Preloader = ({ setAppLoaded, onReady, onExited }) => {
   }, [progressMV]);
 
   useEffect(() => {
-    if (isTouch) return;
-
     const handleMove = (e) => {
       const { clientX, clientY } = e;
       const x = (clientX - window.innerWidth / 2) / 45;
@@ -66,7 +62,7 @@ const Preloader = ({ setAppLoaded, onReady, onExited }) => {
     };
     window.addEventListener('mousemove', handleMove);
     return () => window.removeEventListener('mousemove', handleMove);
-  }, [mouseX, mouseY, isTouch]);
+  }, [mouseX, mouseY]);
 
   useEffect(() => {
     assetProgressRef.current = assetProgress;
@@ -300,7 +296,7 @@ const Preloader = ({ setAppLoaded, onReady, onExited }) => {
 
           {/* ATMOSPHERIC BOKEH (Floating Dust Particles) */}
           <motion.div className="absolute inset-0 pointer-events-none" style={{ x: particlesX, y: particlesY }}>
-             {[...Array(isTouch ? 12 : 35)].map((_, i) => (
+             {[...Array(35)].map((_, i) => (
                 <div 
                     key={i}
                     className="absolute bg-white/20 rounded-full blur-[2px]"

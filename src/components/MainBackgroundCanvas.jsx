@@ -8,7 +8,6 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { sanitizeGltfMaterials } from '../utils/sanitizeGltfMaterials';
 import { cloneGltfScene } from '../utils/cloneGltfScene';
-import { getDeviceDPR, isTouchDevice } from '../utils/device';
 
 const GOLD_RIM = '#D4AF37';
 
@@ -405,7 +404,6 @@ function HybridScene({ scrollProgressRef, scrollProgress, hasExperienced, heroTi
 
 const MainBackgroundCanvas = ({ scrollProgressRef, scrollProgress = 0, hasExperienced = false, heroTitleShown = false, gateMetricsRef }) => {
   const vignetteRef = useRef(null);
-  const isTouch = useMemo(() => isTouchDevice(), []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined;
@@ -442,15 +440,14 @@ const MainBackgroundCanvas = ({ scrollProgressRef, scrollProgress = 0, hasExperi
       <Canvas
         className="w-full h-full"
         // 120FPS Performance Path: Responsive DPR with frame-rate priority
-        // Optimized: Lower DPR cap and no antialiasing on mobile to ensure fluid 60fps
-        dpr={isTouch ? [1, 1.5] : [1, 2]} 
+        dpr={[1, 2]} 
         gl={{ 
-          antialias: !isTouch,
+          antialias: true,
           alpha: true, 
           powerPreference: 'high-performance',
           stencil: false,
           depth: true,
-          precision: isTouch ? 'mediump' : 'highp', 
+          precision: 'mediump', // Improved from lowp for mobile clarity
           preserveDrawingBuffer: false
         }}
         camera={{ position: [0, 0, 5.2], fov: 32 }}
@@ -493,4 +490,4 @@ const MainBackgroundCanvas = ({ scrollProgressRef, scrollProgress = 0, hasExperi
   );
 };
 
-export default React.memo(MainBackgroundCanvas);
+export default MainBackgroundCanvas;

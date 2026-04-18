@@ -249,4 +249,4 @@ const Navbar = ({ hasExperienced, onExperience }) => {
   );
 };
 
-export default React.memo(Navbar);
+export default Navbar;
